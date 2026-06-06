@@ -1,0 +1,37 @@
+/* ============================================================
+   IQPREC — dashboard.css
+   Page-specific styles for dashboard.html. Tokens come from
+   design-system.css; component classes from components.css.
+   ============================================================ */
+
+[data-page="dashboard"] .content-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+#dash-top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Stat-card grid — mobile-first single column, 2-up then 4-up wider. */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+/* The live deadline countdown uses the mono font for steady digits. */
+#gw-countdown {
+  font-family: var(--font-mono);
+}
+
+@media (min-width: 480px) {
+  .dash-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .dash-grid { grid-template-columns: repeat(4, 1fr); }
+}

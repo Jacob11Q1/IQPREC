@@ -1,0 +1,51 @@
+/* ============================================================
+   IQPREC — billing.css
+   Page-specific styles for billing.html: layout spacing + the
+   receipt history table. Cards/buttons come from components.css.
+   ============================================================ */
+
+[data-page="billing"] .content-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+#billing-content { width: 100%; }
+
+/* ---- Receipt history table ---- */
+.receipts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.receipts-table th {
+  text-align: start;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--border-dark);
+}
+
+.receipts-table td {
+  padding: var(--space-3);
+  color: var(--white);
+  border-block-end: 1px solid var(--border-dark);
+}
+
+.receipts-table td.mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.receipts-table tr:last-child td {
+  border-block-end: none;
+}
+
+/* On narrow screens let the table scroll horizontally rather than squash. */
+@media (max-width: 520px) {
+  .receipts-table { display: block; overflow-x: auto; white-space: nowrap; }
+}

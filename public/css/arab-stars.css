@@ -1,0 +1,9 @@
+/* ============================================================
+   IQPREC — arab-stars.css
+   Page-specific styles for arab-stars.html. Tokens come from
+   design-system.css; keep this file scoped to this page only.
+   ============================================================ */
+
+[data-page="arab-stars"] .content-body {
+  /* page-specific layout goes here */
+}

@@ -1,0 +1,18 @@
+/* ============================================================
+   IQPREC — login.css
+   Page-specific styles for login.html. Shared auth-card styles live
+   in components.css (.auth-wrap / .auth-card / .pw-toggle / …).
+   Tokens come from design-system.css.
+   ============================================================ */
+
+/* The standalone auth pages have no sidebar/bottom-nav, so let the
+   content column fill the viewport and center the card vertically. */
+[data-page="login"] .content {
+  min-block-size: 100vh;
+}
+
+[data-page="login"] .content-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}

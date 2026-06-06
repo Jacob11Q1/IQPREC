@@ -1,0 +1,9 @@
+/* ============================================================
+   IQPREC — mini-league.css
+   Page-specific styles for mini-league.html. Tokens come from
+   design-system.css; keep this file scoped to this page only.
+   ============================================================ */
+
+[data-page="mini-league"] .content-body {
+  /* page-specific layout goes here */
+}

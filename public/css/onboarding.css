@@ -1,0 +1,148 @@
+/* ============================================================
+   IQPREC — onboarding.css
+   Page-specific styles for onboarding.html: the step indicator,
+   step panels, and the language-choice buttons. Card / button /
+   field styles are inherited from components.css.
+   ============================================================ */
+
+[data-page="onboarding"] .content {
+  min-block-size: 100vh;
+}
+[data-page="onboarding"] .content-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.onboarding {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  inline-size: 100%;
+  padding: var(--space-6) var(--space-4);
+}
+
+/* ---- Step indicator ---- */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-end: var(--space-2);
+}
+
+.step-dot {
+  inline-size: 28px;
+  block-size: 6px;
+  border-radius: 999px;
+  background: var(--navy-elevated);
+  transition: background var(--t-base);
+}
+.step-dot.is-done { background: var(--green-dark); }
+.step-dot.is-active { background: var(--green); }
+
+.step-counter {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin-block-end: var(--space-5);
+}
+
+/* ---- Step panels ---- */
+.onb-step { inline-size: 100%; }
+.onb-step[hidden] { display: none; }
+
+.onb-card {
+  inline-size: 100%;
+  max-inline-size: 460px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+/* ---- Step 1: language choices ---- */
+.lang-choices {
+  display: grid;
+  gap: var(--space-3);
+  margin-block-start: var(--space-5);
+}
+
+.lang-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  background: var(--navy);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--r-lg);
+  color: var(--white);
+  transition: border-color var(--t-fast), background var(--t-fast), transform var(--t-fast);
+}
+.lang-choice:hover {
+  border-color: var(--green);
+  background: rgba(0, 217, 126, 0.06);
+}
+.lang-choice:active { transform: translateY(1px); }
+
+.lang-choice-big {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+}
+.lang-choice-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---- Step 3: features ---- */
+.onb-features {
+  text-align: start;
+  margin-block: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.onb-features li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 15px;
+  color: var(--text-light);
+}
+.onb-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 22px;
+  block-size: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(0, 217, 126, 0.15);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+}
+.onb-everything {
+  margin-block: var(--space-3);
+}
+
+/* ---- Actions + back ---- */
+.onb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-block-start: var(--space-5);
+}
+
+.onb-back {
+  margin-block-start: var(--space-5);
+  color: var(--text-light);
+  font-size: 14px;
+}
+.onb-back:hover { color: var(--white); }
+
+/* Two-column language choices on wider screens */
+@media (min-width: 600px) {
+  .lang-choices { grid-template-columns: 1fr 1fr; }
+}

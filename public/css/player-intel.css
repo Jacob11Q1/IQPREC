@@ -1,0 +1,9 @@
+/* ============================================================
+   IQPREC — player-intel.css
+   Page-specific styles for player-intel.html. Tokens come from
+   design-system.css; keep this file scoped to this page only.
+   ============================================================ */
+
+[data-page="player-intel"] .content-body {
+  /* page-specific layout goes here */
+}

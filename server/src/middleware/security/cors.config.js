@@ -1,0 +1,29 @@
+/* ============================================================
+   IQPREC — middleware/security/cors.config.js  (Pentagon L4)
+   Allow ONLY the FRONTEND_URL origin. NEVER a wildcard — wildcard
+   plus credentials is forbidden by the spec and by browsers anyway.
+   Credentials enabled so the httpOnly refresh cookie can flow.
+   ============================================================ */
+
+import cors from 'cors';
+import { env } from '../../config/env.js';
+
+const ALLOWED_ORIGIN = env.FRONTEND_URL || 'http://localhost:3000';
+
+export const corsConfig = cors({
+  origin(origin, callback) {
+    // Requests with no Origin header are same-origin / server-to-server
+    // / curl — allow them. Browser cross-origin requests must match
+    // the single configured frontend origin exactly.
+    if (!origin || origin === ALLOWED_ORIGIN) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 600, // cache preflight 10 min
+});
+
+export default corsConfig;

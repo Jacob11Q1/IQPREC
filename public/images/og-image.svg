@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#0e2236"/>
+      <stop offset="100%" stop-color="#0B1929"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#FFFFFF" stroke-opacity="0.03" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Reticle -->
+  <g transform="translate(600,250)" fill="none" stroke="#00D97E">
+    <circle r="92" stroke-width="5" opacity="0.30"/>
+    <circle r="64" stroke-width="5" opacity="0.60"/>
+    <circle r="36" stroke-width="5" opacity="1"/>
+    <line x1="0" y1="-118" x2="0" y2="-100" stroke-width="5" stroke-linecap="round"/>
+    <line x1="0" y1="100" x2="0" y2="118" stroke-width="5" stroke-linecap="round"/>
+    <line x1="-118" y1="0" x2="-100" y2="0" stroke-width="5" stroke-linecap="round"/>
+    <line x1="100" y1="0" x2="118" y2="0" stroke-width="5" stroke-linecap="round"/>
+    <circle r="13" fill="#00D97E" stroke="none"/>
+    <circle r="5" fill="#0B1929" stroke="none"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="600" y="430" text-anchor="middle" font-family="'Syne','Arial',sans-serif" font-weight="800" font-size="104" letter-spacing="4">
+    <tspan fill="#00D97E">IQ</tspan><tspan fill="#FFFFFF">PREC</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="600" y="500" text-anchor="middle" font-family="'DM Sans','Arial',sans-serif" font-weight="500" font-size="34" fill="#9AABBB" letter-spacing="1">
+    Intelligence. Precision. Every Gameweek.
+  </text>
+
+  <!-- Arabic tagline -->
+  <text x="600" y="556" text-anchor="middle" font-family="'Noto Sans Arabic','Arial',sans-serif" font-weight="600" font-size="34" fill="#00D97E" direction="rtl">
+    ذكاء. دقّة. كل جولة.
+  </text>
+</svg>

@@ -1,0 +1,9 @@
+/* ============================================================
+   IQPREC — differentials.css
+   Page-specific styles for differentials.html. Tokens come from
+   design-system.css; keep this file scoped to this page only.
+   ============================================================ */
+
+[data-page="differentials"] .content-body {
+  /* page-specific layout goes here */
+}

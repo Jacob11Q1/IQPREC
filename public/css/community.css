@@ -1,0 +1,9 @@
+/* ============================================================
+   IQPREC — community.css
+   Page-specific styles for community.html. Tokens come from
+   design-system.css; keep this file scoped to this page only.
+   ============================================================ */
+
+[data-page="community"] .content-body {
+  /* page-specific layout goes here */
+}

@@ -1,0 +1,49 @@
+/* ============================================================
+   IQPREC — register.css
+   Page-specific styles for register.html: the 4-stage password
+   strength meter (CSS width transitions) + field hints. Shared
+   auth-card styles live in components.css.
+   ============================================================ */
+
+[data-page="register"] .content {
+  min-block-size: 100vh;
+}
+[data-page="register"] .content-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+/* ---- 4-stage password strength bar ---- */
+.pw-strength {
+  margin-block-start: var(--space-2);
+}
+
+.pw-strength-track {
+  position: relative;
+  block-size: 6px;
+  border-radius: 999px;
+  background: var(--navy-elevated);
+  overflow: hidden;
+}
+
+.pw-strength-fill {
+  block-size: 100%;
+  inline-size: 0;
+  border-radius: 999px;
+  background: var(--red);
+  transition: width var(--t-base), background var(--t-base);
+}
+
+/* Stage widths + colors (4 stages) */
+.pw-strength.s1 .pw-strength-fill { inline-size: 25%;  background: var(--red); }
+.pw-strength.s2 .pw-strength-fill { inline-size: 50%;  background: var(--gold); }
+.pw-strength.s3 .pw-strength-fill { inline-size: 75%;  background: var(--blue); }
+.pw-strength.s4 .pw-strength-fill { inline-size: 100%; background: var(--green); }
+
+.pw-strength-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-block-start: var(--space-1);
+}

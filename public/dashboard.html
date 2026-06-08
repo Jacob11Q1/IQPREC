@@ -28,8 +28,21 @@
 
       <main class="content-body">
         <h1 data-i18n="nav.dashboard">Dashboard — IQPREC</h1>
-        <section class="card" data-widget="milestone" aria-label="Community milestone"></section>
-        <section data-widget="referral" aria-label="Referrals"></section>
+
+        <!-- Squad stat cards (gameweek + countdown, value, bank, transfers) -->
+        <section class="stats-row" id="stats-row" aria-label="Squad stats"></section>
+
+        <!-- This week's captain pick (CTA or recommendation card) -->
+        <section class="captain-section" id="captain-hook" aria-label="Captain pick"></section>
+
+        <!-- Squad formation pitch -->
+        <section class="squad-section" id="squad-formation" aria-label="Squad formation"></section>
+
+        <!-- Competitions + referrals -->
+        <div class="dash-bottom">
+          <section class="competitions-widget" data-widget="competitions" aria-label="Competitions"></section>
+          <section data-widget="referral" aria-label="Referrals"></section>
+        </div>
         <!-- dashboard page content rendered by /js/dashboard.js -->
       </main>
 

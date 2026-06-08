@@ -22,6 +22,7 @@ import appRouter from './app.js';
 import aiRouter from './ai.js';
 import fplRouter from './fpl.js';
 import billingRouter from './billing.js';
+import competitionsRouter from './competitions.js';
 
 import { authLimiter, aiLimiter } from '../middleware/security/rate-limiter.js';
 import { verifyToken } from '../middleware/auth/verify-token.js';
@@ -45,6 +46,9 @@ api.get('/health', (req, res) => {
 });
 
 api.use('/stats', statsRouter);
+
+// ---- Competitions (public reads; auto-opened on milestone triggers) ----
+api.use('/competitions', competitionsRouter);
 
 // ---- FPL data engine (public reads + per-route auth on squad endpoints) ----
 api.use('/fpl', fplRouter);

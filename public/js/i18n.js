@@ -214,6 +214,7 @@ export const translations = {
     'pricing.season.title': 'باقة الموسم',
     'pricing.season.price': '110$ / موسم',
     'pricing.season.desc': 'من آب حتى 31 أيار. وفّر أكثر من الشهري.',
+    'pricing.bestValue': 'الأفضل قيمة',
     'pricing.choose': 'اختر هذه الخطة',
     'pricing.everything': 'كل شيء مشمول. خطة واحدة. بدون مستويات.',
 
@@ -564,6 +565,7 @@ export const translations = {
     'pricing.season.title': 'Season Pass',
     'pricing.season.price': '$110 / season',
     'pricing.season.desc': 'August to May 31st. Save vs monthly.',
+    'pricing.bestValue': 'Best Value',
     'pricing.choose': 'Choose this plan',
     'pricing.everything': 'Everything included. One plan. No tiers.',
 

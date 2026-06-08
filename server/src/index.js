@@ -20,11 +20,11 @@ import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
-import { env, isProduction } from './config/env.js';
+import { env, isProduction, isDevelopment } from './config/env.js';
 import { securityHeaders } from './middleware/security/helmet.config.js';
 import { corsConfig } from './middleware/security/cors.config.js';
 import { sanitizeInput } from './middleware/security/sanitize-input.js';
-import { globalLimiter } from './middleware/security/rate-limiter.js';
+import { globalLimiter, clearRateLimits } from './middleware/security/rate-limiter.js';
 import { mountApiRoutes } from './routes/index.js';
 import { initFplJobs } from './jobs/fpl-sync.job.js';
 import { initBillingJobs } from './jobs/billing-expiry.job.js';
@@ -149,6 +149,18 @@ app.listen(port, () => {
     initBillingJobs();
   } catch (err) {
     console.error('[startup] billing jobs failed to init:', err?.message || err);
+  }
+
+  // Development: flush any stale rate-limit blocks so testing isn't
+  // throttled by limits hit in a previous run.
+  if (isDevelopment) {
+    clearRateLimits()
+      .then(({ memCleared, redisCleared }) =>
+        console.log(
+          `[rate-limit] development — cleared ${memCleared} in-memory + ${redisCleared} Redis keys; relaxed limits active.`
+        )
+      )
+      .catch(() => {});
   }
 });
 

@@ -26,6 +26,7 @@ function daysLeft(iso) {
 function pricingCardsHtml() {
   const card = (kind, featured) => `
     <div class="pricing-plan${featured ? ' is-featured' : ''}">
+      ${featured ? `<span class="plan-badge">${t('pricing.bestValue')}</span>` : ''}
       <div class="plan-name">${t(`pricing.${kind}.title`)}</div>
       <div class="plan-price">${t(`pricing.${kind}.price`)}</div>
       <p class="plan-desc">${t(`pricing.${kind}.desc`)}</p>

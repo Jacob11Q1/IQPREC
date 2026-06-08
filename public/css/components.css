@@ -48,9 +48,12 @@
   border: 1px solid var(--green);
 }
 
+/* Keep the primary CTA clearly green on hover (a near-white --green-light
+   washed the button out). Brighten + lift for unmistakable feedback;
+   navy text stays high-contrast on the brighter green. */
 .btn-primary:hover {
-  background: var(--green-light);
-  border-color: var(--green-light);
+  filter: brightness(1.08);
+  box-shadow: 0 4px 14px rgba(0, 217, 126, 0.35);
 }
 
 .btn-secondary {
@@ -660,6 +663,7 @@
   max-width: 720px;
 }
 .pricing-plan {
+  position: relative;
   background: var(--navy-card);
   border: 1px solid var(--border-dark);
   border-radius: var(--r-lg);
@@ -667,6 +671,25 @@
   text-align: start;
 }
 .pricing-plan.is-featured { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+
+/* "Best Value" badge on the featured (Season Pass) card. */
+.plan-badge {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: var(--space-5);
+  transform: translateY(-50%);
+  background: var(--green);
+  color: var(--navy);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 4px var(--space-3);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+[lang="ar"] .plan-badge { font-family: var(--font-arabic); }
 .pricing-plan .plan-name { font-family: var(--font-heading); font-size: 18px; }
 .pricing-plan .plan-price {
   font-family: var(--font-mono);

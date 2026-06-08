@@ -4,15 +4,22 @@
    graceful in-memory fallback when Redis is unavailable (fail open
    for availability, never take the API down).
 
-   Tiers (CLAUDE.md L3):
+   Tiers (CLAUDE.md L3) — PRODUCTION:
      • auth   — 5 requests / 15 min  per IP
      • ai     — 10 requests / 60 sec per authenticated user
      • global — 100 requests / 60 sec per IP
+
+   In DEVELOPMENT the limits are relaxed so localhost testing isn't
+   blocked, and any stale limit keys are flushed on startup:
+     • auth   — 100 / 15 min per IP
+     • ai     — 100 / 60 sec per user
+     • global — 1000 / 60 sec per IP
 
    On limit: HTTP 429 + Retry-After header + JSON envelope.
    ============================================================ */
 
 import { redis, isRedisReady } from '../../lib/redis.js';
+import { isDevelopment } from '../../config/env.js';
 
 /* ------------------------------------------------------------
    Redis sliding window (atomic via Lua).
@@ -139,27 +146,79 @@ const byIp = (req) => req.ip;
 const byUser = (req) => req.user?.userId || `ip:${req.ip}`;
 
 /* ------------------------------------------------------------
+   Per-environment limits. Strict in production (Pentagon L3),
+   relaxed in development so localhost testing isn't blocked.
+   ------------------------------------------------------------ */
+const LIMITS = isDevelopment
+  ? {
+      auth: 100, // 100 / 15 min per IP
+      ai: 100, // 100 / 60 sec per user
+      global: 1000, // 1000 / 60 sec per IP
+    }
+  : {
+      auth: 5, // 5 / 15 min per IP
+      ai: 10, // 10 / 60 sec per user
+      global: 100, // 100 / 60 sec per IP
+    };
+
+/* ------------------------------------------------------------
    Exported limiters
    ------------------------------------------------------------ */
 export const authLimiter = createRateLimiter({
   name: 'auth',
   windowMs: 15 * 60_000, // 15 minutes
-  max: 5,
+  max: LIMITS.auth,
   keyResolver: byIp,
 });
 
 export const aiLimiter = createRateLimiter({
   name: 'ai',
   windowMs: 60_000, // 60 seconds
-  max: 10,
+  max: LIMITS.ai,
   keyResolver: byUser,
 });
 
 export const globalLimiter = createRateLimiter({
   name: 'global',
   windowMs: 60_000, // 60 seconds
-  max: 100,
+  max: LIMITS.global,
   keyResolver: byIp,
 });
+
+/* ------------------------------------------------------------
+   clearRateLimits() — wipe all existing limit state so old blocks
+   don't linger. Clears the in-memory store and (best-effort) every
+   Redis `rl:*` key via SCAN (never KEYS — CLAUDE.md L3). Intended
+   to run on startup in development; safe to call anytime.
+   ------------------------------------------------------------ */
+export async function clearRateLimits() {
+  const memCount = memStore.size;
+  memStore.clear();
+
+  let redisCount = 0;
+  if (isRedisReady()) {
+    try {
+      let cursor = '0';
+      do {
+        const [next, keys] = await redis.scan(
+          cursor,
+          'MATCH',
+          'rl:*',
+          'COUNT',
+          100
+        );
+        cursor = next;
+        if (keys.length) {
+          await redis.del(...keys);
+          redisCount += keys.length;
+        }
+      } while (cursor !== '0');
+    } catch {
+      // Redis unavailable/hiccup → in-memory clear already done; ignore.
+    }
+  }
+
+  return { memCleared: memCount, redisCleared: redisCount };
+}
 
 export { createRateLimiter };

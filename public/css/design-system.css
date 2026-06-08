@@ -90,6 +90,9 @@ html {
   padding: 0;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* Mobile safety: never allow sideways scrolling from decorative
+     overflow (hero particles, animations, wide tables). */
+  overflow-x: hidden;
 }
 
 body {
@@ -103,6 +106,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: hidden;
   text-rendering: optimizeLegibility;
 }
 

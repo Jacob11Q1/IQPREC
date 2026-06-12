@@ -1,9 +1,87 @@
 /* ============================================================
    IQPREC — lineup.css
-   Page-specific styles for lineup.html. Tokens come from
-   design-system.css; keep this file scoped to this page only.
+   Lineup Builder page. The SVG pitch / player-node styles are reused
+   from dashboard.css (linked in lineup.html). This file styles the page
+   chrome, the formation selector, and the AI analysis panel.
+   Mobile-first (375px) → larger screens via min-width queries.
    ============================================================ */
 
-[data-page="lineup"] .content-body {
-  /* page-specific layout goes here */
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
 }
+.page-title { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1.2; margin: 0; }
+.page-sub { margin: var(--space-1) 0 0; color: var(--text-light); font-size: 0.9rem; }
+[lang="ar"] .page-sub { font-family: var(--font-arabic); line-height: 1.6; }
+
+.gw-badge {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--green);
+  background: rgba(0, 217, 126, 0.12);
+  border: 1px solid rgba(0, 217, 126, 0.35);
+  border-radius: var(--r-md);
+  padding: 6px 12px;
+}
+
+/* ---------------- Controls (formation + generate) ---------------- */
+.generate-bar { margin-block-end: var(--space-5); }
+.lineup-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.formation-select {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+[lang="ar"] .formation-select { font-family: var(--font-arabic); }
+.formation-select select {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--white);
+  background: var(--navy-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.formation-select select:hover,
+.formation-select select:focus {
+  border-color: var(--green);
+  outline: none;
+}
+
+.btn-generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+}
+.btn-generate .bolt { width: 20px; height: 20px; }
+.btn-generate.is-loading { opacity: 0.7; pointer-events: none; }
+
+@media (min-width: 600px) {
+  .lineup-controls { flex-direction: row; align-items: flex-end; }
+  .btn-generate { width: auto; min-width: 240px; }
+  .page-title { font-size: 1.85rem; }
+}
+
+/* ---------------- AI analysis panel ---------------- */
+.ai-analysis { margin-block: var(--space-4) var(--space-5); }
+.analysis-body { color: var(--text-mid); line-height: 1.6; font-size: 0.95rem; }
+.analysis-body p { margin: 0 0 var(--space-3); }
+.analysis-body p:last-child { margin-bottom: 0; }
+[lang="ar"] .analysis-body { font-family: var(--font-arabic); line-height: 1.8; }
+
+.w-100 { width: 100%; }

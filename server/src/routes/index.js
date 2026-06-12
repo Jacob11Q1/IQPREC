@@ -62,8 +62,8 @@ api.use('/auth', authLimiter, authRouter);
 // ---- App (authenticated + subscription-gated) ----
 api.use('/app', verifyToken, checkSubscription, appRouter);
 
-// ---- AI (authenticated + per-user AI limit) ----
-api.use('/ai', verifyToken, aiLimiter, aiRouter);
+// ---- AI (authenticated + subscription-gated + per-user AI limit) ----
+api.use('/ai', verifyToken, checkSubscription, aiLimiter, aiRouter);
 
 // ---- Unmatched API → clean 404 ----
 api.use((req, res) => {

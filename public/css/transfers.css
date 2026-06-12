@@ -1,9 +1,146 @@
 /* ============================================================
    IQPREC — transfers.css
-   Page-specific styles for transfers.html. Tokens come from
-   design-system.css; keep this file scoped to this page only.
+   Transfers page. player-circle / buttons / skeletons / state come from
+   components.css. Mobile-first (375px) → larger via min-width queries.
    ============================================================ */
 
-[data-page="transfers"] .content-body {
-  /* page-specific layout goes here */
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
 }
+.page-title { font-family: var(--font-heading); font-size: 1.5rem; line-height: 1.2; margin: 0; }
+.page-sub { margin: var(--space-1) 0 0; color: var(--text-light); font-size: 0.9rem; }
+[lang="ar"] .page-sub { font-family: var(--font-arabic); line-height: 1.6; }
+
+.gw-badge {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--green);
+  background: rgba(0, 217, 126, 0.12);
+  border: 1px solid rgba(0, 217, 126, 0.35);
+  border-radius: var(--r-md);
+  padding: 6px 12px;
+}
+
+/* ---------------- Transfer meta chips ---------------- */
+.transfer-meta {
+  display: flex;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+  flex-wrap: wrap;
+}
+.meta-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+[lang="ar"] .meta-chip { font-family: var(--font-arabic); }
+.meta-chip strong { font-family: var(--font-mono); font-size: 1rem; color: var(--white); }
+
+/* ---------------- Squad grid ---------------- */
+.squad-grid { margin-block-end: var(--space-4); }
+.weak-count {
+  font-size: 0.78rem;
+  color: var(--gold);
+  font-weight: 600;
+}
+[lang="ar"] .weak-count { font-family: var(--font-arabic); }
+
+.squad-chips {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+@media (min-width: 600px) { .squad-chips { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px) { .squad-chips { grid-template-columns: repeat(5, 1fr); } }
+
+.squad-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: var(--space-3) var(--space-2);
+  background: var(--navy-elevated);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.squad-chip:hover { transform: translateY(-2px); }
+.squad-chip.weak-out  { border-color: var(--red); box-shadow: 0 0 0 1px rgba(232, 68, 90, 0.3); }
+.squad-chip.weak-form { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.3); }
+
+.chip-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.chip-meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-light); }
+
+.weak-legend {
+  display: flex;
+  gap: var(--space-4);
+  margin-block-start: var(--space-3);
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+[lang="ar"] .weak-legend { font-family: var(--font-arabic); }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot-red { background: var(--red); }
+.dot-amber { background: var(--gold); }
+
+/* ---------------- Generate ---------------- */
+.generate-bar { margin-block-end: var(--space-4); }
+.btn-generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+}
+.btn-generate .bolt { width: 20px; height: 20px; }
+.btn-generate.is-loading { opacity: 0.7; pointer-events: none; }
+@media (min-width: 600px) {
+  .btn-generate { width: auto; min-width: 260px; }
+  .page-title { font-size: 1.85rem; }
+}
+
+/* ---------------- Wildcard banner ---------------- */
+.wildcard-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: linear-gradient(135deg, rgba(245, 166, 35, 0.18), rgba(245, 166, 35, 0.06));
+  border: 1px solid var(--gold);
+  border-radius: var(--r-lg);
+  padding: var(--space-4);
+  margin-block-end: var(--space-4);
+}
+.wildcard-banner strong { color: var(--gold); font-family: var(--font-heading); }
+.wildcard-banner span { color: var(--text-mid); font-size: 0.9rem; }
+[lang="ar"] .wildcard-banner span { font-family: var(--font-arabic); line-height: 1.7; }
+
+/* ---------------- AI analysis ---------------- */
+.ai-analysis { margin-block-end: var(--space-5); }
+.analysis-body { color: var(--text-mid); line-height: 1.6; font-size: 0.95rem; }
+.analysis-body p { margin: 0 0 var(--space-3); }
+.analysis-body p:last-child { margin-bottom: 0; }
+[lang="ar"] .analysis-body { font-family: var(--font-arabic); line-height: 1.8; }
+
+.w-100 { width: 100%; }

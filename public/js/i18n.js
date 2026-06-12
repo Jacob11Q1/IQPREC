@@ -366,6 +366,51 @@ export const translations = {
     /* ---- Footer ---- */
     'footer.rights': 'جميع الحقوق محفوظة © IQPREC',
     'footer.credit': 'صُمّم وطُوّر بواسطة جاكوب قمصية',
+
+    /* ---- Captain Picker page ---- */
+    'captainPage.title': 'مختار الكابتن',
+    'captainPage.sub': 'شارة قيادتك المثلى، مدعومة بالبيانات.',
+    'captainPage.generate': 'أنشئ اختيار الكابتن',
+    'captainPage.topPick': 'الاختيار الأول',
+    'captainPage.alternative': 'البديل',
+    'captainPage.differential': 'الفارق',
+    'captainPage.analysis': 'تحليل الذكاء الاصطناعي',
+    'captainPage.share': 'شارك',
+    'captainPage.shareMessage': 'كابتني حسب IQPREC',
+    'captainPage.failed': 'تعذّر إنشاء التوصية',
+    'captainPage.rateLimited': 'طلبات كثيرة بسرعة. انتظر دقيقة ثم حاول مجدداً.',
+    'captainPage.noTeamTitle': 'اربط فريقك أولاً',
+    'captainPage.noTeamMsg': 'لرؤية اختيار الكابتن نحتاج لربط فريقك في الـ FPL.',
+
+    /* ---- Lineup Builder page ---- */
+    'lineupPage.title': 'باني التشكيلة',
+    'lineupPage.sub': 'أقوى تشكيلة، يختارها الذكاء بالبيانات.',
+    'lineupPage.formation': 'الخطة',
+    'lineupPage.formationAuto': 'تلقائي (موصى به)',
+    'lineupPage.generate': 'أنشئ التشكيلة',
+    'lineupPage.yourPitch': 'ملعبك',
+    'lineupPage.analysis': 'تحليل الذكاء الاصطناعي',
+    'lineupPage.failed': 'تعذّر إنشاء التشكيلة',
+    'lineupPage.rateLimited': 'طلبات كثيرة بسرعة. انتظر دقيقة ثم حاول مجدداً.',
+    'lineupPage.noTeamTitle': 'اربط فريقك أولاً',
+    'lineupPage.noTeamMsg': 'لبناء تشكيلتك نحتاج لربط فريقك في الـ FPL.',
+
+    /* ---- Transfers page ---- */
+    'transfersPage.title': 'الانتقالات',
+    'transfersPage.sub': 'حركات ذكية، بلا خصم نقاط ضائع.',
+    'transfersPage.free': 'انتقالات مجانية',
+    'transfersPage.generate': 'أنشئ خطة الانتقالات',
+    'transfersPage.mySquad': 'فريقي',
+    'transfersPage.weakFlagged': 'تم رصد {n} لاعب يحتاج انتباه',
+    'transfersPage.legendOut': 'غير متاح / مصاب',
+    'transfersPage.legendForm': 'فورمة ضعيفة',
+    'transfersPage.suggestions': 'اقتراحات الانتقالات',
+    'transfersPage.wildcardTitle': 'إشارة ورقة البدل',
+    'transfersPage.wildcardMsg': 'يقترح IQPREC استخدام ورقة البدل هذه الجولة — راجع التحليل بالأسفل.',
+    'transfersPage.failed': 'تعذّر إنشاء خطة الانتقالات',
+    'transfersPage.rateLimited': 'طلبات كثيرة بسرعة. انتظر دقيقة ثم حاول مجدداً.',
+    'transfersPage.noTeamTitle': 'اربط فريقك أولاً',
+    'transfersPage.noTeamMsg': 'لاقتراح الانتقالات نحتاج لربط فريقك في الـ FPL.',
   },
 
   en: {
@@ -724,6 +769,51 @@ export const translations = {
     /* ---- Footer ---- */
     'footer.rights': 'All Rights Reserved © IQPREC',
     'footer.credit': 'Designed and Developed by Jacob Qumsiyeh',
+
+    /* ---- Captain Picker page ---- */
+    'captainPage.title': 'Captain Picker',
+    'captainPage.sub': 'Your optimal armband, backed by data.',
+    'captainPage.generate': 'Generate Captain Pick',
+    'captainPage.topPick': 'Top Pick',
+    'captainPage.alternative': 'Alternative',
+    'captainPage.differential': 'Differential',
+    'captainPage.analysis': 'AI Analysis',
+    'captainPage.share': 'Share',
+    'captainPage.shareMessage': 'My captain by IQPREC',
+    'captainPage.failed': 'Could not generate the recommendation',
+    'captainPage.rateLimited': 'Too many requests too fast. Wait a minute and try again.',
+    'captainPage.noTeamTitle': 'Connect your team first',
+    'captainPage.noTeamMsg': 'We need your FPL team connected to pick your captain.',
+
+    /* ---- Lineup Builder page ---- */
+    'lineupPage.title': 'Lineup Builder',
+    'lineupPage.sub': 'Your strongest XI, picked by data.',
+    'lineupPage.formation': 'Formation',
+    'lineupPage.formationAuto': 'Auto (recommended)',
+    'lineupPage.generate': 'Generate Lineup',
+    'lineupPage.yourPitch': 'Your pitch',
+    'lineupPage.analysis': 'AI Analysis',
+    'lineupPage.failed': 'Could not generate the lineup',
+    'lineupPage.rateLimited': 'Too many requests too fast. Wait a minute and try again.',
+    'lineupPage.noTeamTitle': 'Connect your team first',
+    'lineupPage.noTeamMsg': 'We need your FPL team connected to build your lineup.',
+
+    /* ---- Transfers page ---- */
+    'transfersPage.title': 'Transfers',
+    'transfersPage.sub': 'Smart moves, never wasted hits.',
+    'transfersPage.free': 'Free transfers',
+    'transfersPage.generate': 'Generate Transfer Plan',
+    'transfersPage.mySquad': 'My squad',
+    'transfersPage.weakFlagged': '{n} player(s) flagged for attention',
+    'transfersPage.legendOut': 'Unavailable / injured',
+    'transfersPage.legendForm': 'Poor form',
+    'transfersPage.suggestions': 'Transfer suggestions',
+    'transfersPage.wildcardTitle': 'Wildcard signal',
+    'transfersPage.wildcardMsg': 'IQPREC suggests playing your wildcard this gameweek — see the analysis below.',
+    'transfersPage.failed': 'Could not generate the transfer plan',
+    'transfersPage.rateLimited': 'Too many requests too fast. Wait a minute and try again.',
+    'transfersPage.noTeamTitle': 'Connect your team first',
+    'transfersPage.noTeamMsg': 'We need your FPL team connected to suggest transfers.',
   },
 };
 

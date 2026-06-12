@@ -19,7 +19,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
-import { isProduction } from '../config/env.js';
+import { isProduction, isDevelopment } from '../config/env.js';
 import { supabase, hasDb } from '../db/client.js';
 import { redis, isRedisReady } from '../lib/redis.js';
 import { validateBody } from '../middleware/security/validate-body.js';
@@ -242,6 +242,12 @@ router.post('/register', validateBody(registerSchema), async (req, res, next) =>
       );
     }
     sendVerificationEmail(email, fullName, verifyRaw, language).catch(() => {});
+
+    // Development convenience: surface the raw verification token so it can
+    // be clicked manually without a real email. NEVER in production.
+    if (isDevelopment) {
+      return res.status(201).json({ ...accepted, devVerifyToken: verifyRaw });
+    }
 
     return res.status(201).json(accepted);
   } catch (err) {

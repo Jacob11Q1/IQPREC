@@ -15,9 +15,37 @@ import {
 } from './auth.js';
 
 const API_BASE = '/api/v1';
+const TOKEN_KEY = 'iqprec_token';
 
 // Ensures concurrent 401s trigger only ONE refresh round-trip.
 let _refreshPromise = null;
+
+/* Resolve the bearer token:
+   1) window.accessToken (in-memory, fast path)
+   2) auth.js module store (getAccessToken)
+   3) sessionStorage('iqprec_token') — rehydrate window.accessToken from it
+   This is what lets the token survive a page navigation within the tab. */
+function resolveToken() {
+  if (typeof window !== 'undefined' && window.accessToken) return window.accessToken;
+
+  const fromModule = getAccessToken();
+  if (fromModule) {
+    if (typeof window !== 'undefined') window.accessToken = fromModule;
+    return fromModule;
+  }
+
+  try {
+    const stored = sessionStorage.getItem(TOKEN_KEY);
+    if (stored) {
+      if (typeof window !== 'undefined') window.accessToken = stored;
+      setAccessToken(stored); // keep the module store in sync
+      return stored;
+    }
+  } catch {
+    /* sessionStorage unavailable — ignore */
+  }
+  return null;
+}
 
 function buildUrl(endpoint) {
   if (/^https?:\/\//i.test(endpoint)) return endpoint;
@@ -98,7 +126,7 @@ export async function apiFetch(endpoint, options = {}) {
 
   const makeInit = () => {
     const headers = new Headers(options.headers || {});
-    const token = getAccessToken();
+    const token = resolveToken();
     if (token) headers.set('Authorization', `Bearer ${token}`);
 
     let { body } = options;

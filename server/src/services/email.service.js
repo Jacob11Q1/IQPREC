@@ -16,11 +16,23 @@
    ============================================================ */
 
 import { Resend } from 'resend';
-import { env } from '../config/env.js';
+import { env, isDevelopment } from '../config/env.js';
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 const FROM = env.RESEND_FROM || 'IQPREC <noreply@iqprec.com>';
 const FRONTEND_URL = env.FRONTEND_URL || 'https://iqprec.com';
+
+/* In development (or with a placeholder key like "will_add..."), never call
+   the real Resend API — log the message + action URL to the console instead,
+   so a missing/invalid key can't break registration and tokens can be
+   verified manually. Production with a real key always sends for real. */
+function isDevEmail() {
+  return (
+    isDevelopment ||
+    (env.RESEND_API_KEY || '').startsWith('will_add') ||
+    !resend
+  );
+}
 
 /* Brand tokens (mirrors :root in the design system). */
 const C = {
@@ -37,12 +49,12 @@ const C = {
 /* ------------------------------------------------------------
    Low-level send — never throws.
    ------------------------------------------------------------ */
-async function send({ to, subject, html }) {
-  if (!resend) {
-    console.log(
-      `[email:dev] (RESEND_API_KEY unset) → to=${to} | subject="${subject}"`
-    );
-    return { dev: true };
+async function send({ to, subject, html, devUrl, devUrlLabel = 'Verification URL' }) {
+  if (isDevEmail()) {
+    console.log(`[DEV EMAIL] To: ${to}`);
+    console.log(`[DEV EMAIL] Subject: ${subject}`);
+    if (devUrl) console.log(`[DEV EMAIL] ${devUrlLabel}: ${devUrl}`);
+    return { success: true, dev: true };
   }
   try {
     const result = await resend.emails.send({ from: FROM, to, subject, html });
@@ -141,6 +153,8 @@ export async function sendVerificationEmail(email, fullName, verificationToken, 
   return send({
     to: email,
     subject,
+    devUrl: link,
+    devUrlLabel: 'Verification URL',
     html: layout({
       lang: language,
       heading: language === 'ar' ? 'مرحباً بك في IQPREC' : 'Welcome to IQPREC',
@@ -205,6 +219,8 @@ export async function sendPasswordResetEmail(email, fullName, resetToken, langua
   return send({
     to: email,
     subject,
+    devUrl: link,
+    devUrlLabel: 'Reset URL',
     html: layout({
       lang: language,
       heading: language === 'ar' ? 'إعادة تعيين كلمة المرور' : 'Reset your password',

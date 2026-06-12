@@ -13,6 +13,7 @@ import { setAccessToken, setUser } from './auth.js';
 import { t, applyTranslations } from './i18n.js';
 import { createLogoHTML } from './layout.js';
 
+const TOKEN_KEY = 'iqprec_token';
 const USER_KEY = 'iqprec_user';
 
 function $(id) {
@@ -82,13 +83,21 @@ async function handleSubmit(e) {
   setLoading(false);
 
   if (res.success && res.data?.accessToken) {
-    setAccessToken(res.data.accessToken); // in-memory only
+    // Persist the access token + user for the session (per-tab; survives
+    // navigation to the dashboard). setAccessToken/setUser already mirror
+    // to sessionStorage; the explicit writes below make the intent obvious.
+    setAccessToken(res.data.accessToken);
+    try {
+      sessionStorage.setItem(TOKEN_KEY, res.data.accessToken);
+    } catch {
+      /* sessionStorage may be unavailable — non-fatal */
+    }
     if (res.data.user) {
       setUser(res.data.user);
       try {
         sessionStorage.setItem(USER_KEY, JSON.stringify(res.data.user));
       } catch {
-        /* sessionStorage may be unavailable — non-fatal */
+        /* non-fatal */
       }
     }
     window.location.replace(safeNext());

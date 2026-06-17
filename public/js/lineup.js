@@ -1,11 +1,8 @@
 /* ============================================================
    IQPREC — lineup.js
    Lineup Builder page controller. Renders the manager's real squad on an
-   SVG pitch, lets them pick a formation and generate an AI lineup
-   recommendation (optimal XI + per-player notes + formation rationale).
-   The pitch always reflects the manager's actual squad; the AI guidance
-   (recommended formation + reasoning) renders in the analysis panel.
-   Loads after auth, i18n, layout.
+   SVG pitch with player photos, lets them pick a formation and generate an
+   AI lineup recommendation.
    ============================================================ */
 
 import { applyTranslations, t, getLanguage } from './i18n.js';
@@ -16,7 +13,7 @@ import { formatNumber } from './ui.js';
 const state = { gameweek: null, squadIds: [], picks: [], connected: false };
 
 const POS_CLASS = { 1: 'pos-gk', 2: 'pos-def', 3: 'pos-mid', 4: 'pos-fwd' };
-const ROW_Y = { 1: 90, 2: 72, 3: 50, 4: 28 };
+const ROW_Y    = { 1: 90, 2: 72, 3: 50, 4: 28 };
 const FORMATIONS = ['3-4-3', '3-5-2', '4-4-2', '4-3-3', '4-5-1', '5-3-2', '5-4-1'];
 
 function $(sel, root = document) { return root.querySelector(sel); }
@@ -31,6 +28,24 @@ function toParas(text) {
     .split(/\n{2,}/)
     .map((p) => `<p>${esc(p.trim()).replace(/\n/g, '<br>')}</p>`)
     .join('');
+}
+
+/* FPL CDN photo URL */
+function photoUrl(photo) {
+  if (!photo) return null;
+  const id = String(photo).replace('.jpg', '').replace('.png', '');
+  return `https://resources.premierleague.com/premierleague/photos/players/110x140/p${id}.png`;
+}
+
+/* CSP-safe image fallback — call after any innerHTML set that contains .player-img */
+function wireImgFallbacks(root) {
+  root.querySelectorAll('img.player-img').forEach((img) => {
+    img.addEventListener('error', () => {
+      img.hidden = true;
+      const fb = img.nextElementSibling;
+      if (fb && fb.classList.contains('player-img-fallback')) fb.hidden = false;
+    });
+  });
 }
 
 /* ------------------------------------------------------------
@@ -72,48 +87,80 @@ function renderScaffold() {
 }
 
 /* ------------------------------------------------------------
-   Pitch (same model as the dashboard)
+   Pitch SVG background
    ------------------------------------------------------------ */
 function pitchSvg() {
   return `
-    <svg class="pitch-bg" viewBox="0 0 300 420" preserveAspectRatio="none" aria-hidden="true">
+    <svg class="pitch-bg" viewBox="0 0 300 450" preserveAspectRatio="none" aria-hidden="true">
       <defs>
-        <linearGradient id="pitchGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#0f5c33"/>
-          <stop offset="1" stop-color="#0a3f23"/>
+        <linearGradient id="lpg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#0d6b3a"/>
+          <stop offset="25%"  stop-color="#0f7a42"/>
+          <stop offset="50%"  stop-color="#0d6b3a"/>
+          <stop offset="75%"  stop-color="#0f7a42"/>
+          <stop offset="100%" stop-color="#0a4f2b"/>
         </linearGradient>
       </defs>
-      <rect x="0" y="0" width="300" height="420" fill="url(#pitchGrad)"/>
-      <line x1="0" y1="210" x2="300" y2="210" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
-      <circle cx="150" cy="210" r="34" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
-      <rect x="85" y="0" width="130" height="58" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
-      <rect x="85" y="362" width="130" height="58" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+      <rect width="300" height="450" fill="url(#lpg)"/>
+      <rect x="0"   y="0"   width="300" height="45"  fill="rgba(255,255,255,0.02)"/>
+      <rect x="0"   y="90"  width="300" height="45"  fill="rgba(255,255,255,0.02)"/>
+      <rect x="0"   y="180" width="300" height="45"  fill="rgba(255,255,255,0.02)"/>
+      <rect x="0"   y="270" width="300" height="45"  fill="rgba(255,255,255,0.02)"/>
+      <rect x="0"   y="360" width="300" height="45"  fill="rgba(255,255,255,0.02)"/>
+      <rect x="8" y="8" width="284" height="434" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+      <line x1="8" y1="225" x2="292" y2="225" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+      <circle cx="150" cy="225" r="36" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+      <circle cx="150" cy="225" r="3"  fill="rgba(255,255,255,0.4)"/>
+      <rect x="68"  y="8"   width="164" height="66" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+      <rect x="68"  y="376" width="164" height="66" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+      <rect x="114" y="8"   width="72"  height="26" fill="none" stroke="rgba(255,255,255,0.3)"  stroke-width="1.5"/>
+      <rect x="114" y="416" width="72"  height="26" fill="none" stroke="rgba(255,255,255,0.3)"  stroke-width="1.5"/>
     </svg>`;
 }
 
+/* ------------------------------------------------------------
+   Player node — photo ring + name + pts.
+   Positioning uses data-pitch-x/y (CSP-safe — inline style= is blocked).
+   ------------------------------------------------------------ */
 function nodeHtml(pick, opts = {}) {
   const p = pick.player || {};
   const name = p.web_name || '';
-  const label = name.length > 6 ? name.slice(0, 6) : name;
+  const label = esc(name.length > 7 ? name.slice(0, 7) : name);
   const posClass = POS_CLASS[p.element_type] || 'pos-mid';
   const cap = pick.is_captain ? ' is-captain' : '';
   const pts = p.total_points != null ? formatNumber(p.total_points) : '—';
   const flagged = p.status && p.status !== 'a' ? ' is-flagged' : '';
-  const style = opts.bench ? '' : `style="inset-inline-start:${opts.x}%;inset-block-start:${opts.y}%"`;
+  const posAttr = opts.bench ? '' : `data-pitch-x="${opts.x}" data-pitch-y="${opts.y}"`;
+  const url = photoUrl(p.photo);
+  const initials = esc(String(name).slice(0, 3).toUpperCase());
+
+  const photoInner = url
+    ? `<img src="${esc(url)}" alt="${esc(name)}" loading="lazy" class="player-img">
+       <span class="player-initials player-img-fallback" hidden>${initials}</span>`
+    : `<span class="player-initials">${initials}</span>`;
+
   return `
     <button class="player-node${opts.bench ? ' bench-node' : ''}${flagged}" type="button"
-            data-pid="${esc(p.id)}" ${style}>
-      <span class="player-circle ${posClass}${cap}">${esc(label)}</span>
-      <span class="player-node-pts">${esc(pts)}</span>
+            data-pid="${esc(String(p.id ?? ''))}" ${posAttr}>
+      <div class="player-card">
+        <div class="player-photo-ring ${posClass}${cap}">
+          <div class="player-photo-inner">${photoInner}</div>
+        </div>
+        <span class="player-card-name">${label}</span>
+        <span class="player-card-pts">${esc(String(pts))}</span>
+      </div>
     </button>`;
 }
 
+/* ------------------------------------------------------------
+   Pitch render
+   ------------------------------------------------------------ */
 function renderPitch(picks, formationLabel) {
   const host = $('#lineup-pitch');
   if (!host) return;
 
   const starters = picks.filter((p) => p.position <= 11);
-  const bench = picks.filter((p) => p.position >= 12).sort((a, b) => a.position - b.position);
+  const bench    = picks.filter((p) => p.position >= 12).sort((a, b) => a.position - b.position);
 
   const lines = { 1: [], 2: [], 3: [], 4: [] };
   starters.forEach((p) => {
@@ -149,6 +196,14 @@ function renderPitch(picks, formationLabel) {
       <div class="bench-label">${esc(t('dash.formation.bench'))}</div>
       <div class="bench-row">${benchNodes}</div>
     </div>`;
+
+  /* Apply pitch positions via JS — CSP blocks inline style= attributes */
+  host.querySelectorAll('.player-node[data-pitch-x]').forEach((node) => {
+    node.style.left = node.dataset.pitchX + '%';
+    node.style.top  = node.dataset.pitchY + '%';
+  });
+
+  wireImgFallbacks(host);
   applyTranslations(host);
 }
 
@@ -204,7 +259,7 @@ function renderAnalysisError(message) {
     <div class="state state-error" role="alert">
       <p class="state-title">${esc(t('lineupPage.failed'))}</p>
       <p class="state-message">${esc(message || '')}</p>
-      <button class="btn btn-secondary" type="button" id="retry-btn" data-i18n="action.retry">${esc(t('action.retry'))}</button>
+      <button class="btn btn-secondary" type="button" id="retry-btn">${esc(t('action.retry'))}</button>
     </div>`;
   $('#retry-btn')?.addEventListener('click', generate);
 }
@@ -230,7 +285,6 @@ async function generate() {
     });
     const rec = data.recommendation || '';
     renderAnalysis(rec);
-    // Update the pitch formation badge with the AI's recommendation if found.
     const f = formation || parseFormation(rec);
     if (f) renderPitch(state.picks, f);
   } catch (err) {

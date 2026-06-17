@@ -1,9 +1,253 @@
 /* ============================================================
    IQPREC — player-intel.css
-   Page-specific styles for player-intel.html. Tokens come from
-   design-system.css; keep this file scoped to this page only.
    ============================================================ */
 
-[data-page="player-intel"] .content-body {
-  /* page-specific layout goes here */
+/* ---------------- Search bar ---------------- */
+.search-bar { padding: 16px; }
+
+.search-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-block-end: 8px;
+}
+
+.search-field { position: relative; }
+
+.search-icon {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 14px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  background: var(--navy-elevated);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--r-md);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 11px 14px 11px 42px;
+  transition: border-color var(--t-base);
+  box-sizing: border-box;
+}
+
+[dir="rtl"] .search-input {
+  padding-inline-start: 14px;
+  padding-inline-end: 42px;
+}
+
+[dir="rtl"] .search-icon {
+  inset-inline-start: auto;
+  inset-inline-end: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.search-input::placeholder { color: var(--muted); }
+
+/* ---------------- Dropdown ---------------- */
+.search-dropdown {
+  position: absolute;
+  inset-block-start: calc(100% + 4px);
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  background: var(--navy-card);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--r-md);
+  z-index: 50;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-block-end: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  text-align: start;
+  transition: background var(--t-fast);
+}
+
+.search-result-item:hover,
+.search-result-item:focus {
+  background: var(--navy-elevated);
+  outline: none;
+}
+
+.search-result-item:last-child { border-block-end: none; }
+
+.result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.result-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--white);
+}
+
+.result-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.search-no-results {
+  padding: 14px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ---------------- Player detail ---------------- */
+.intel-player-header {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.intel-player-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-circle--lg {
+  width: 52px;
+  height: 52px;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.intel-player-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--white);
+}
+
+.intel-player-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  margin-block-start: 2px;
+}
+
+.intel-status {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-inline-start: auto;
+}
+
+.status-ok   { color: var(--green); }
+.status-warn { color: var(--gold); }
+.status-bad  { color: var(--red); }
+
+/* ---------------- News ---------------- */
+.intel-news {
+  padding: 10px 16px;
+  background: rgba(245, 166, 35, 0.08);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  border-radius: var(--r-sm);
+  margin-inline: 16px;
+  margin-block-end: 4px;
+  font-size: 0.85rem;
+  color: var(--gold);
+  line-height: 1.5;
+}
+
+/* ---------------- Stats grid ---------------- */
+.intel-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: var(--border-dark);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  margin: 16px;
+}
+
+.intel-stat-card {
+  background: var(--navy-elevated);
+  padding: 12px 14px;
+}
+
+.intel-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-block-end: 4px;
+}
+
+.intel-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+/* ---------------- History bars ---------------- */
+.intel-history { padding: 0 16px 16px; }
+
+.intel-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-block-end: 10px;
+}
+
+.history-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 56px;
+}
+
+.history-bar {
+  flex: 1;
+  background: var(--green);
+  border-radius: 3px 3px 0 0;
+  min-height: 8px;
+  height: var(--h, 20%);
+  position: relative;
+  opacity: 0.75;
+  transition: opacity var(--t-fast);
+}
+
+.history-bar:hover { opacity: 1; }
+
+.history-pts {
+  position: absolute;
+  inset-block-start: -18px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+
+.intel-empty { padding: 32px 16px; }
+
+@media (min-width: 640px) {
+  .intel-stats-grid { grid-template-columns: repeat(3, 1fr); }
 }

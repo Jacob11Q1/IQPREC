@@ -126,9 +126,9 @@ function icon(name) {
 function isActive(href) {
   const path = window.location.pathname;
   if (href === path) return true;
-  // "/" → index; also treat /dashboard as default landing when at root of app
-  if (path === '/' && href === '/dashboard.html') return false;
-  return false;
+  // Normalize both sides — strip .html for comparison so /dashboard matches /dashboard.html
+  const norm = (p) => p.replace(/\.html$/, '').replace(/\/$/, '') || '/';
+  return norm(href) === norm(path);
 }
 
 /* ------------------------------------------------------------
@@ -246,7 +246,7 @@ function closeMore() {
   if (!sheet) return;
   sheet.classList.remove('open');
   document.body.style.overflow = '';
-  setTimeout(() => sheet.setAttribute('hidden', ''), 280);
+  setTimeout(() => sheet.setAttribute('hidden', ''), 340);
 }
 
 /* ------------------------------------------------------------

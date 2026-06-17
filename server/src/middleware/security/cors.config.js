@@ -6,16 +6,22 @@
    ============================================================ */
 
 import cors from 'cors';
-import { env } from '../../config/env.js';
+import { env, isDevelopment } from '../../config/env.js';
 
 const ALLOWED_ORIGIN = env.FRONTEND_URL || 'http://localhost:3000';
+
+// In dev, also allow the Vite dev server origin so the React app can talk
+// to Express without setting FRONTEND_URL in .env.
+const DEV_ORIGINS = isDevelopment
+  ? new Set([ALLOWED_ORIGIN, 'http://localhost:5173', 'http://127.0.0.1:5173'])
+  : new Set([ALLOWED_ORIGIN]);
 
 export const corsConfig = cors({
   origin(origin, callback) {
     // Requests with no Origin header are same-origin / server-to-server
     // / curl — allow them. Browser cross-origin requests must match
-    // the single configured frontend origin exactly.
-    if (!origin || origin === ALLOWED_ORIGIN) {
+    // the configured frontend origin(s).
+    if (!origin || DEV_ORIGINS.has(origin)) {
       return callback(null, true);
     }
     return callback(new Error('Not allowed by CORS'));

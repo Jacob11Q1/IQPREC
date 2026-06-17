@@ -39,7 +39,8 @@ import {
 } from '../services/ai.service.js';
 import { TTL } from '../services/cache.service.js';
 import { buildExpertContext } from '../lib/fpl-expert-rules.js';
-import { supabase, hasDb } from '../db/client.js';
+import { hasDb } from '../db/client.js';
+import { queryMany } from '../db/query.js';
 import { redis, isRedisReady } from '../lib/redis.js';
 
 const router = Router();
@@ -83,28 +84,46 @@ router.post('/captain', validateBody(captainSchema), async (req, res, next) => {
     // 1) THE RULE — validate before any prompt build.
     await validatePlayers(squadPlayerIds);
 
-    // 8) Cache (6h) keyed by user + gw + squad.
+    // 2) Load players + fixtures upfront so meta is available for both fresh and cached paths.
+    const players = await getActivePlayersByIds(squadPlayerIds);
+    const candidates = players.filter(
+      (p) =>
+        p.element_type === 3 ||
+        p.element_type === 4 ||
+        (p.element_type === 2 && Number(p.total_points) > 80)
+    );
+    const pool = candidates.length ? candidates : players;
+    const fixtureMap = await buildFixtureMap(gw);
+    const { ownership } = await getCommunityOwnership(squadPlayerIds, gw);
+
+    // 3) Pick top captain candidate (form × fixture quality) for structured meta.
+    const topCap = pool.slice().sort((a, b) => {
+      const aFix = fixtureMap.get(a.team_id)?.[0];
+      const bFix = fixtureMap.get(b.team_id)?.[0];
+      const aScore = Number(a.form || 0) + (aFix ? (6 - aFix.fdr) + (aFix.home ? 0.5 : 0) : 0);
+      const bScore = Number(b.form || 0) + (bFix ? (6 - bFix.fdr) + (bFix.home ? 0.5 : 0) : 0);
+      return bScore - aScore;
+    })[0];
+
+    const captainMeta = topCap ? {
+      playerName: topCap.web_name,
+      photo: topCap.photo || null,
+      team: topCap.team_name,
+      form: Number(topCap.form || 0),
+      totalPoints: Number(topCap.total_points || 0),
+      confidence: Math.min(95, Math.round(Number(topCap.form || 0) * 10 + 30)),
+      opponent: fixtureMap.get(topCap.team_id)?.[0]?.opp || '',
+      fdr: fixtureMap.get(topCap.team_id)?.[0]?.fdr || 3,
+      communityPercent: ownership?.[topCap.id] || 0,
+    } : null;
+
+    // 4) Cache (6h) keyed by user + gw + squad.
     const cacheKey = `ai:captain:${userId}:${gw}:${idsHash(squadPlayerIds)}`;
 
     const { text, cached } = await getCachedOrGenerate(
       cacheKey,
       TTL.AI_DIFFERENTIALS / 2, // 6h
       async () => {
-        // 2) Live player rows.
-        const players = await getActivePlayersByIds(squadPlayerIds);
-
-        // 3) Attacking captain candidates: MID/FWD, plus strong DEFs (>80pts).
-        const candidates = players.filter(
-          (p) =>
-            p.element_type === 3 ||
-            p.element_type === 4 ||
-            (p.element_type === 2 && Number(p.total_points) > 80)
-        );
-        const pool = candidates.length ? candidates : players;
-
-        // 4-7) Fixtures + community ownership + context strings.
-        const fixtureMap = await buildFixtureMap(gw);
-        const { ownership } = await getCommunityOwnership(squadPlayerIds, gw);
         const playerContext = buildPlayerContext(pool, fixtureMap);
         const communityContext = buildCommunityContext(pool, ownership);
 
@@ -129,12 +148,12 @@ router.post('/captain', validateBody(captainSchema), async (req, res, next) => {
           gameweek: gw,
           language: lang,
           maxTokens: 1400,
+          meta: captainMeta,
         });
       }
     );
 
     if (cached) {
-      // Still record that the user pulled a (cached) captain rec.
       await logRecommendation({
         userId,
         type: 'captain',
@@ -142,6 +161,7 @@ router.post('/captain', validateBody(captainSchema), async (req, res, next) => {
         language: lang,
         outputText: text,
         cached: true,
+        meta: captainMeta,
       });
     }
 
@@ -315,23 +335,23 @@ router.post('/differentials', validateBody(differentialsSchema), async (req, res
         }
 
         // Low ownership + good form + active.
-        let query = supabase
-          .from('fpl_players')
-          .select(
-            'id, web_name, team_id, team_name, element_type, now_cost, form, total_points, minutes, expected_goals, expected_assists, selected_by_percent, status, news, chance_of_playing'
-          )
-          .eq('season', CURRENT_SEASON)
-          .neq('status', 'removed')
-          .lt('selected_by_percent', 10)
-          .gt('form', 5)
-          .order('form', { ascending: false })
-          .limit(25);
-        if (budget) query = query.lte('now_cost', Math.round(budget * 10));
+        const params = [CURRENT_SEASON, 'removed'];
+        let sql = `
+          SELECT id, web_name, team_id, team_name, element_type, now_cost, form,
+                 total_points, minutes, expected_goals, expected_assists,
+                 selected_by_percent, status, news, chance_of_playing
+          FROM fpl_players
+          WHERE season = $1 AND status != $2
+            AND selected_by_percent < 10
+            AND form > 5
+        `;
+        if (budget) {
+          params.push(Math.round(budget * 10));
+          sql += ` AND now_cost <= $${params.length}`;
+        }
+        sql += ` ORDER BY form DESC LIMIT 25`;
 
-        const { data: pool, error } = await query;
-        if (error) throw Object.assign(new Error(error.message), { code: 'FPL_3012', status: 500 });
-
-        const candidates = pool || [];
+        const candidates = await queryMany(sql, params);
         if (!candidates.length) {
           return lang === 'ar'
             ? 'لا يوجد حالياً لاعبون بملكية منخفضة وفورمة عالية يستوفون شروط الفِرَق لهذه الجولة.'
@@ -557,5 +577,81 @@ function buildChatContent(message, squadContext) {
   if (!ctx) return message;
   return `${message}\n\n[My current squad context (JSON): ${ctx}]`;
 }
+
+/* ============================================================
+   POST /api/v1/ai/chips   — chip strategy advice (cached 12h)
+   ============================================================ */
+const chipsSchema = z.object({
+  squadPlayerIds: squadIds,
+  gameweek,
+  language,
+  availableChips: z
+    .array(z.enum(['wildcard', 'freehit', 'triplecaptain', 'benchboost']))
+    .min(1)
+    .max(4)
+    .default(['wildcard', 'freehit', 'triplecaptain', 'benchboost']),
+});
+
+router.post('/chips', validateBody(chipsSchema), async (req, res, next) => {
+  try {
+    const { squadPlayerIds, gameweek: gw, language: lang, availableChips } = req.body;
+    const userId = req.user.userId;
+
+    await validatePlayers(squadPlayerIds);
+
+    const cacheKey = `ai:chips:${userId}:${gw}:${[...availableChips].sort().join(',')}`;
+
+    const { text, cached } = await getCachedOrGenerate(
+      cacheKey,
+      TTL.AI_DIFFERENTIALS, // 12h
+      async () => {
+        const players = await getActivePlayersByIds(squadPlayerIds);
+        const fixtureMap = await buildFixtureMap(gw);
+        const playerContext = buildPlayerContext(players, fixtureMap);
+
+        const CHIP_DISPLAY = {
+          wildcard: 'Wildcard',
+          freehit: 'Free Hit',
+          triplecaptain: 'Triple Captain',
+          benchboost: 'Bench Boost',
+        };
+        const chipsList = availableChips.map((c) => CHIP_DISPLAY[c] || c).join(', ');
+
+        const messages = [
+          {
+            role: 'user',
+            content:
+              `Advise on chip strategy for Gameweek ${gw}.\n\n` +
+              `My squad:\n${playerContext}\n\n` +
+              `Available chips: ${chipsList}\n\n` +
+              `Apply these expert rules:\n${buildExpertContext(['chip', 'fixture', 'form'])}\n\n` +
+              `For each available chip give: PLAY NOW, HOLD, or NOT YET — with a confidence ` +
+              `percentage and the single strongest reason. If a Double Gameweek is confirmed ` +
+              `or expected soon, weight that heavily. Format each chip clearly with its name, ` +
+              `verdict, and reasoning.`,
+          },
+        ];
+
+        return callClaude(messages, buildSystemPrompt(lang), {
+          userId,
+          type: 'chips',
+          gameweek: gw,
+          language: lang,
+          maxTokens: 1400,
+        });
+      }
+    );
+
+    if (cached) {
+      await logRecommendation({
+        userId, type: 'chips', gameweek: gw, language: lang, outputText: text, cached: true,
+      });
+    }
+
+    return ok(res, { recommendation: text, gameweek: gw, cached });
+  } catch (err) {
+    next(err);
+  }
+});
 
 export default router;

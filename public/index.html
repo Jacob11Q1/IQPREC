@@ -9,24 +9,13 @@
   <meta name="description" content="IQPREC — مساعدك الذكي لدوري الفانتازي بريميرليغ. تحليلات فورية وبيانات حقيقية وقرارات أذكى في كل جولة، بالعربي.">
   <link rel="canonical" href="https://iqprec.com/">
 
-  <!-- Open Graph (WhatsApp / Facebook) -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="IQPREC">
   <meta property="og:locale" content="ar_AR">
-  <meta property="og:locale:alternate" content="en_US">
   <meta property="og:url" content="https://iqprec.com/">
   <meta property="og:title" content="IQPREC — ذكاء. دقّة. كل جولة.">
   <meta property="og:description" content="مساعدك الذكي لدوري الفانتازي بريميرليغ. تحليلات بالعربي وبيانات حقيقية وقرارات أذكى في كل جولة.">
   <meta property="og:image" content="https://iqprec.com/images/og-image.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="IQPREC — Intelligence. Precision. Every Gameweek.">
-
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="IQPREC — ذكاء. دقّة. كل جولة.">
-  <meta name="twitter:description" content="مساعدك الذكي لدوري الفانتازي بريميرليغ. تحليلات بالعربي وبيانات حقيقية في كل جولة.">
-  <meta name="twitter:image" content="https://iqprec.com/images/og-image.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,26 +28,26 @@
 
 <body data-page="index" data-public="true">
 
-  <!-- ===================== TOP NAV ===================== -->
+  <!-- ===================== NAV ===================== -->
   <header class="landing-nav">
     <a class="landing-brand" href="/" aria-label="IQPREC">
       <span class="logo-word"><span class="logo-iq">IQ</span><span class="logo-prec">PREC</span></span>
     </a>
     <nav class="landing-nav-links" aria-label="Primary">
       <a href="#competitions" data-i18n="land.competitions">Competitions</a>
-      <a href="#features" data-i18n="land.features">Features</a>
-      <a href="#pricing" data-i18n="land.pricing">Pricing</a>
+      <a href="#features"     data-i18n="land.features">Features</a>
+      <a href="#pricing"      data-i18n="land.pricing">Pricing</a>
     </nav>
     <div class="landing-nav-actions">
-      <button class="lang-toggle" data-action="lang-toggle" type="button" aria-label="Toggle language">العربية</button>
-      <a class="btn btn-ghost btn-sm landing-login" href="/login.html" data-i18n="land.login">Log in</a>
-      <a class="btn btn-primary btn-sm" href="/register.html" data-i18n="land.register">Start free</a>
+      <button class="lang-toggle" data-action="lang-toggle" type="button" aria-label="Toggle language">EN</button>
+      <a class="btn btn-ghost btn-sm landing-login" href="/login.html"    data-i18n="land.login">Log in</a>
+      <a class="btn btn-primary btn-sm"              href="/register.html" data-i18n="land.register">Start free</a>
     </div>
   </header>
 
   <!-- ===================== HERO ===================== -->
   <section class="hero">
-    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="hero-grid"      aria-hidden="true"></div>
     <div class="hero-particles" aria-hidden="true">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
       <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -67,169 +56,281 @@
     <div class="hero-inner">
       <div class="hero-logo" id="hero-logo" aria-hidden="true"></div>
 
+      <span class="hero-eyebrow" data-i18n="hero.eyebrow">🧠 AI-Powered FPL Intelligence</span>
+
       <h1 class="hero-title">
         <span class="logo-iq">IQ</span><span class="logo-prec">PREC</span>
       </h1>
 
-      <h2 class="hero-h2" data-i18n="hero.h2">دقة الذكاء. كل جولة.</h2>
-      <p class="hero-sub" data-i18n="hero.subtitle">مساعدك الذكي لدوري الفانتازي بريميرليغ.</p>
+      <h2 class="hero-h2" data-i18n="hero.h2">ذكاء. دقّة. كل جولة.</h2>
+      <p class="hero-sub" data-i18n="hero.subtitle">مساعدك الذكي لدوري الفانتازي بريميرليغ — قرارات أذكى بالعربي، بيانات حقيقية، كل أسبوع.</p>
+
+      <!-- Featured Arab stars showcase -->
+      <div class="hero-players" id="hero-players" aria-hidden="true">
+        <!-- Rendered by index.js from live FPL data -->
+        <div class="hero-player-chip">
+          <span style="width:32px;height:32px;border-radius:50%;background:rgba(0,217,126,0.15);border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:14px">⭐</span>
+          <span data-i18n="hero.loadingPlayers">Loading stars…</span>
+        </div>
+      </div>
 
       <div class="hero-cta">
         <a class="btn btn-primary btn-lg" href="/register.html" data-i18n="hero.startTrial">ابدأ التجربة المجانية</a>
-        <a class="btn btn-secondary btn-lg" href="#features" data-i18n="hero.howItWorks">كيف يعمل</a>
+        <a class="btn btn-ghost btn-lg"   href="#features"      data-i18n="hero.howItWorks">كيف يعمل</a>
+      </div>
+
+      <div class="hero-trust">
+        <span class="hero-trust-item">✓ <span data-i18n="hero.trust1">7 أيام مجانية</span></span>
+        <span style="color:var(--border-dark)">•</span>
+        <span class="hero-trust-item">✓ <span data-i18n="hero.trust2">لا بطاقة مطلوبة</span></span>
+        <span style="color:var(--border-dark)">•</span>
+        <span class="hero-trust-item">✓ <span data-i18n="hero.trust3">بالعربية والإنجليزية</span></span>
       </div>
     </div>
 
     <a class="hero-scroll" href="#social" aria-label="Scroll down">
       <span data-i18n="hero.scroll">مرّر للأسفل</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>
+      </svg>
     </a>
   </section>
 
   <!-- ===================== SOCIAL PROOF ===================== -->
   <section class="social-proof" id="social">
     <div class="social-grid">
-      <div class="counter-block">
+      <div class="counter-block fade-up">
         <span class="counter" data-target="0">0</span>
         <span class="counter-label" data-i18n="social.totalManagers">Total Managers</span>
       </div>
-      <div class="counter-block">
+      <div class="counter-block fade-up" style="transition-delay:0.1s">
         <span class="counter" data-target="0">0</span>
         <span class="counter-label" data-i18n="social.arabManagers">Arab Managers</span>
       </div>
-      <div class="counter-block">
+      <div class="counter-block fade-up" style="transition-delay:0.2s">
         <span class="counter" data-target="0">0</span>
-        <span class="counter-label" data-i18n="social.aiRecs">AI Recommendations Generated</span>
+        <span class="counter-label" data-i18n="social.aiRecs">AI Recommendations</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ARAB STARS SHOWCASE ===================== -->
+  <section class="arab-stars-section" id="arab-stars">
+    <div class="arab-stars-inner">
+      <h2 class="section-title" style="text-align:start" data-i18n="arabStars.showcase.title">⭐ نجوم عرب في الفانتازي</h2>
+      <p class="section-sub" style="text-align:start;margin-block-end:var(--space-5)" data-i18n="arabStars.showcase.sub">لاعبون عرب في الدوري الإنجليزي — تابعهم داخل IQPREC.</p>
+      <div class="arab-stars-scroll" id="arab-stars-scroll">
+        <!-- Skeleton placeholders -->
+        <div class="arab-star-card" style="opacity:0.4">
+          <div class="arab-star-photo-fallback skeleton" style="border:none;background:var(--navy-elevated)"></div>
+          <div class="skeleton skeleton-text" style="width:80px;height:10px"></div>
+          <div class="skeleton skeleton-text" style="width:60px;height:8px"></div>
+        </div>
+        <div class="arab-star-card" style="opacity:0.3">
+          <div class="arab-star-photo-fallback skeleton" style="border:none;background:var(--navy-elevated)"></div>
+          <div class="skeleton skeleton-text" style="width:80px;height:10px"></div>
+          <div class="skeleton skeleton-text" style="width:60px;height:8px"></div>
+        </div>
+        <div class="arab-star-card" style="opacity:0.2">
+          <div class="arab-star-photo-fallback skeleton" style="border:none;background:var(--navy-elevated)"></div>
+          <div class="skeleton skeleton-text" style="width:80px;height:10px"></div>
+          <div class="skeleton skeleton-text" style="width:60px;height:8px"></div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- ===================== COMPARISON ===================== -->
   <section class="comparison">
-    <h2 class="section-title" data-i18n="compare.title">Why IQPREC?</h2>
+    <h2 class="section-title fade-up" data-i18n="compare.title">لماذا IQPREC؟</h2>
     <div class="comparison-cards">
-      <div class="comparison-card comparison-generic">
-        <h3 data-i18n="compare.generic.title">Generic FPL tool</h3>
+      <div class="comparison-card comparison-generic fade-up">
+        <h3 data-i18n="compare.generic.title">أدوات فانتازي عادية</h3>
         <ul class="compare-list">
-          <li data-i18n="compare.generic.l1">Generic tips, English only</li>
-          <li data-i18n="compare.generic.l2">Numbers without context</li>
-          <li data-i18n="compare.generic.l3">No reasoning or why</li>
-          <li data-i18n="compare.generic.l4">Doesn't know your team</li>
+          <li data-i18n="compare.generic.l1">نصائح عامة بالإنجليزي فقط</li>
+          <li data-i18n="compare.generic.l2">أرقام بدون سياق أو تفسير</li>
+          <li data-i18n="compare.generic.l3">لا يعرف فريقك أو منافسيك</li>
+          <li data-i18n="compare.generic.l4">لا بيانات مجتمع عربي</li>
         </ul>
       </div>
-      <div class="comparison-card comparison-iqprec">
-        <div class="badge badge-green" data-i18n="brand.name">IQPREC</div>
-        <h3 data-i18n="compare.iqprec.title">IQPREC</h3>
+      <div class="comparison-card comparison-iqprec fade-up" style="transition-delay:0.12s">
+        <div class="badge badge-green" style="margin-block-end:var(--space-3)">IQPREC</div>
+        <h3 data-i18n="compare.iqprec.title">IQPREC — ذكاء حقيقي</h3>
         <ul class="compare-list compare-list-good">
-          <li data-i18n="compare.iqprec.l1">Arabic analysis based on your squad</li>
-          <li data-i18n="compare.iqprec.l2">Confidence score on every call</li>
-          <li data-i18n="compare.iqprec.l3">Arab community ownership data</li>
+          <li data-i18n="compare.iqprec.l1">تحليل بالعربية بناءً على فريقك الحقيقي</li>
+          <li data-i18n="compare.iqprec.l2">درجة ثقة على كل قرار</li>
+          <li data-i18n="compare.iqprec.l3">بيانات ملكية المجتمع العربي</li>
+          <li data-i18n="compare.iqprec.l4">بيانات FPL حية في كل تحليل</li>
         </ul>
-        <p class="compare-example" data-i18n="compare.iqprec.example">Example…</p>
+        <p class="compare-example" data-i18n="compare.iqprec.example">مثال: "صلاح هو اختيارك للكابتن هذا الأسبوع — مباراة سهلة في الملعب وفورم 8.2 — ثقة 87%"</p>
       </div>
     </div>
   </section>
 
-  <!-- ===================== COMPETITIONS (high on page) ===================== -->
+  <!-- ===================== COMPETITIONS ===================== -->
   <section class="competitions" id="competitions">
     <div class="section-head">
-      <span class="badge badge-gold" data-i18n="comp.status.open">Competition open</span>
+      <span class="badge badge-gold" data-i18n="comp.status.open">🏆 مسابقة مفتوحة</span>
       <h2 class="section-title" data-i18n="comp.title">The Falcon League</h2>
-      <p class="section-sub" data-i18n="comp.subtitle">Win Cash Prizes</p>
+      <p class="section-sub" data-i18n="comp.subtitle">اربح جوائز نقدية حقيقية</p>
     </div>
 
     <div class="card milestone-wrap" data-widget="milestone" aria-label="Community milestone"></div>
 
     <div class="prize-grid">
-      <div class="prize-card prize-gold">
-        <div class="prize-emoji" aria-hidden="true">🏆</div>
-        <div class="prize-place" data-i18n="comp.first">1st Place</div>
+      <div class="prize-card prize-gold fade-up">
+        <div class="prize-emoji">🏆</div>
+        <div class="prize-place" data-i18n="comp.first">المركز الأول</div>
         <div class="prize-amount">$500</div>
       </div>
-      <div class="prize-card prize-silver">
-        <div class="prize-emoji" aria-hidden="true">🥈</div>
-        <div class="prize-place" data-i18n="comp.second">2nd Place</div>
+      <div class="prize-card prize-silver fade-up" style="transition-delay:0.1s">
+        <div class="prize-emoji">🥈</div>
+        <div class="prize-place" data-i18n="comp.second">المركز الثاني</div>
         <div class="prize-amount">$300</div>
       </div>
-      <div class="prize-card prize-bronze">
-        <div class="prize-emoji" aria-hidden="true">🥉</div>
-        <div class="prize-place" data-i18n="comp.third">3rd Place</div>
+      <div class="prize-card prize-bronze fade-up" style="transition-delay:0.2s">
+        <div class="prize-emoji">🥉</div>
+        <div class="prize-place" data-i18n="comp.third">المركز الثالث</div>
         <div class="prize-amount">$200</div>
       </div>
     </div>
 
-    <h3 class="steps-title" data-i18n="comp.howToEnter">How to enter</h3>
+    <h3 class="steps-title" data-i18n="comp.howToEnter">كيفية الدخول</h3>
     <ol class="steps">
-      <li><span class="step-num">1</span><span data-i18n="comp.step1">Refer 5 friends with your link</span></li>
-      <li><span class="step-num">2</span><span data-i18n="comp.step2">Join the IQPREC community league</span></li>
-      <li><span class="step-num">3</span><span data-i18n="comp.step3">Highest points wins the prize</span></li>
+      <li><span class="step-num">1</span><span data-i18n="comp.step1">ادعُ 5 أصدقاء برابط الإحالة الخاص بك</span></li>
+      <li><span class="step-num">2</span><span data-i18n="comp.step2">انضم إلى دوري IQPREC المجتمعي</span></li>
+      <li><span class="step-num">3</span><span data-i18n="comp.step3">أعلى نقاط في نهاية الموسم يفوز بالجائزة</span></li>
     </ol>
 
-    <a class="btn btn-secondary" href="/competitions.html" data-i18n="comp.viewRules">Full rules</a>
+    <a class="btn btn-secondary" href="/competitions.html" data-i18n="comp.viewRules">القواعد الكاملة</a>
   </section>
 
   <!-- ===================== FEATURES ===================== -->
   <section class="features" id="features">
-    <h2 class="section-title" data-i18n="features.title">All Features Included</h2>
+    <h2 class="section-title fade-up" data-i18n="features.title">كل الميزات — خطة واحدة</h2>
+    <p class="section-sub fade-up" data-i18n="features.sub">لا تدرج. لا ميزات مخفية. كل شيء مشمول.</p>
     <div class="feature-grid">
-      <article class="feature-card"><div class="feature-icon fi-green" aria-hidden="true">⭐</div><h3 data-i18n="feature.captain.t">Captain Picker</h3><p data-i18n="feature.captain.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-blue" aria-hidden="true">📋</div><h3 data-i18n="feature.lineup.t">Lineup Builder</h3><p data-i18n="feature.lineup.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-gold" aria-hidden="true">🔁</div><h3 data-i18n="feature.transfer.t">Transfer Advisor</h3><p data-i18n="feature.transfer.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-red" aria-hidden="true">⚡</div><h3 data-i18n="feature.diff.t">Differentials</h3><p data-i18n="feature.diff.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-blue" aria-hidden="true">🔍</div><h3 data-i18n="feature.intel.t">Player Intel</h3><p data-i18n="feature.intel.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-green" aria-hidden="true">🃏</div><h3 data-i18n="feature.chips.t">Chip Planner</h3><p data-i18n="feature.chips.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-gold" aria-hidden="true">🕵️</div><h3 data-i18n="feature.spy.t">Mini-League Spy</h3><p data-i18n="feature.spy.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-green" aria-hidden="true">💬</div><h3 data-i18n="feature.chat.t">AI Chat</h3><p data-i18n="feature.chat.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-gold" aria-hidden="true">✨</div><h3 data-i18n="feature.arab.t">Arab Stars Watch</h3><p data-i18n="feature.arab.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-green" aria-hidden="true">🟢</div><h3 data-i18n="feature.whatsapp.t">WhatsApp Share</h3><p data-i18n="feature.whatsapp.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-blue" aria-hidden="true">✈️</div><h3 data-i18n="feature.telegram.t">Telegram Bot</h3><p data-i18n="feature.telegram.s"></p></article>
-      <article class="feature-card"><div class="feature-icon fi-red" aria-hidden="true">🔊</div><h3 data-i18n="feature.voice.t">Voice Summary</h3><p data-i18n="feature.voice.s"></p></article>
+      <article class="feature-card">
+        <div class="feature-icon fi-green">⭐</div>
+        <h3 data-i18n="feature.captain.t">اختيار الكابتن</h3>
+        <p data-i18n="feature.captain.s">توصية الكابتن بالذكاء الاصطناعي مبنية على الـ FDR والفورم وبيانات الدوري الصغير.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-blue">📋</div>
+        <h3 data-i18n="feature.lineup.t">بناء التشكيلة</h3>
+        <p data-i18n="feature.lineup.s">تشكيلتك المثلى بناءً على المباريات والفورم ونسبة اللعب.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-gold">🔁</div>
+        <h3 data-i18n="feature.transfer.t">مستشار الانتقالات</h3>
+        <p data-i18n="feature.transfer.s">انتقالات ذكية — لا تخسر نقاطاً لضربة إلا إذا كانت تستحق أكثر من 6 نقاط.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-red">⚡</div>
+        <h3 data-i18n="feature.diff.t">اللاعبون التفاضليون</h3>
+        <p data-i18n="feature.diff.s">اكتشف الجواهر المخفية — ملكية أقل من 10% وفورم عالٍ وتوقعات كبيرة.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-blue">🔍</div>
+        <h3 data-i18n="feature.intel.t">استخبارات اللاعبين</h3>
+        <p data-i18n="feature.intel.s">تحليل معمّق لأي لاعب — إحصائيات وإصابات ومباريات قادمة.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-green">🃏</div>
+        <h3 data-i18n="feature.chips.t">مخطط الرقاقات</h3>
+        <p data-i18n="feature.chips.s">متى تستخدم Triple Captain وBench Boost وFree Hit؟ IQPREC يخبرك.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-gold">🕵️</div>
+        <h3 data-i18n="feature.spy.t">جاسوس الدوري الصغير</h3>
+        <p data-i18n="feature.spy.s">اعرف ما يلعبه منافسوك قبل الجولة وتفوّق عليهم.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-green">💬</div>
+        <h3 data-i18n="feature.chat.t">محادثة الذكاء الاصطناعي</h3>
+        <p data-i18n="feature.chat.s">اسأل أي سؤال عن FPL بالعربي — مدرب شخصي على مدار الساعة.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-gold">✨</div>
+        <h3 data-i18n="feature.arab.t">مراقبة النجوم العرب</h3>
+        <p data-i18n="feature.arab.s">تتبع اللاعبين العرب في FPL مع إحصائيات تفصيلية وتنبيهات.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-green">🟢</div>
+        <h3 data-i18n="feature.whatsapp.t">مشاركة واتساب</h3>
+        <p data-i18n="feature.whatsapp.s">شارك توصياتك مباشرة في مجموعات الواتساب بضغطة واحدة.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-blue">✈️</div>
+        <h3 data-i18n="feature.telegram.t">بوت تيليغرام</h3>
+        <p data-i18n="feature.telegram.s">احصل على تحديثات الجولة مباشرة في تيليغرام — لا تفوّت شيئاً.</p>
+      </article>
+      <article class="feature-card">
+        <div class="feature-icon fi-red">🔊</div>
+        <h3 data-i18n="feature.voice.t">ملخص صوتي</h3>
+        <p data-i18n="feature.voice.s">استمع لتحليل الجولة بدلاً من القراءة — مثالي للسيارة.</p>
+      </article>
     </div>
   </section>
 
   <!-- ===================== PRICING ===================== -->
   <section class="pricing" id="pricing">
-    <h2 class="section-title" data-i18n="price.title">One plan. Everything included.</h2>
-    <p class="section-sub badge badge-green" data-i18n="price.trial">7-day free trial — no card required</p>
+    <h2 class="section-title fade-up" data-i18n="price.title">خطة واحدة. كل شيء مشمول.</h2>
+    <p class="section-sub badge badge-green fade-up" data-i18n="price.trial">7 أيام مجانية — لا بطاقة مطلوبة</p>
     <div class="pricing-cards">
-      <div class="pricing-plan">
-        <div class="plan-name" data-i18n="pricing.monthly.title">Monthly</div>
-        <div class="plan-price" data-i18n="pricing.monthly.price">$15 / month</div>
-        <p class="plan-desc" data-i18n="pricing.monthly.desc">Everything included.</p>
-        <a class="btn btn-secondary btn-block" href="/register.html" data-i18n="price.start">Get started</a>
+      <div class="pricing-plan fade-up">
+        <div class="plan-name" data-i18n="pricing.monthly.title">شهري</div>
+        <div class="plan-price">$15 <span data-i18n="pricing.monthly.per">/ شهر</span></div>
+        <p class="plan-desc" data-i18n="pricing.monthly.desc">كل الميزات مشمولة. ألغِ في أي وقت.</p>
+        <div class="plan-features">
+          <div class="plan-feature" data-i18n="plan.f1">اختيار الكابتن بالذكاء الاصطناعي</div>
+          <div class="plan-feature" data-i18n="plan.f2">مستشار الانتقالات</div>
+          <div class="plan-feature" data-i18n="plan.f3">محادثة AI بالعربي</div>
+          <div class="plan-feature" data-i18n="plan.f4">نجوم عرب + دوري صغير</div>
+        </div>
+        <a class="btn btn-secondary btn-block" href="/register.html" data-i18n="price.start">ابدأ الآن</a>
       </div>
-      <div class="pricing-plan is-featured">
-        <span class="plan-badge" data-i18n="pricing.bestValue">Best Value</span>
-        <div class="plan-name" data-i18n="pricing.season.title">Season Pass</div>
-        <div class="plan-price" data-i18n="pricing.season.price">$110 / season</div>
-        <p class="plan-desc" data-i18n="pricing.season.desc">August to May 31st.</p>
-        <a class="btn btn-primary btn-block" href="/register.html" data-i18n="price.start">Get started</a>
+      <div class="pricing-plan is-featured fade-up" style="transition-delay:0.12s">
+        <span class="plan-badge" data-i18n="pricing.bestValue">الأفضل قيمةً</span>
+        <div class="plan-name" data-i18n="pricing.season.title">باقة الموسم</div>
+        <div class="plan-price">$110 <span data-i18n="pricing.season.per">/ موسم</span></div>
+        <p class="plan-desc" data-i18n="pricing.season.desc">من أغسطس حتى 31 مايو — وفّر $70 مقارنة بالشهري.</p>
+        <div class="plan-features">
+          <div class="plan-feature" data-i18n="plan.f1">اختيار الكابتن بالذكاء الاصطناعي</div>
+          <div class="plan-feature" data-i18n="plan.f2">مستشار الانتقالات</div>
+          <div class="plan-feature" data-i18n="plan.f3">محادثة AI بالعربي</div>
+          <div class="plan-feature" data-i18n="plan.f4">نجوم عرب + دوري صغير</div>
+          <div class="plan-feature" data-i18n="plan.f5">أولوية الوصول للميزات الجديدة</div>
+        </div>
+        <a class="btn btn-primary btn-block" href="/register.html" data-i18n="price.start">ابدأ الآن</a>
       </div>
     </div>
   </section>
 
-  <!-- ===================== COMMUNITY (Palestine) ===================== -->
+  <!-- ===================== COMMUNITY ===================== -->
   <section class="community-section">
-    <h2 class="section-title" data-i18n="community.title">Our community</h2>
+    <h2 class="section-title" data-i18n="community.title">مجتمعنا</h2>
 
     <div class="community-grid">
-      <div class="community-map card">
+      <div class="community-map">
         <svg class="palestine-map" viewBox="0 0 120 200" role="img" aria-label="Palestine">
           <path d="M70 4 L62 30 L74 52 L66 78 L78 96 L60 120 L66 150 L46 176 L40 196 L30 176 L34 150 L26 120 L40 96 L30 70 L44 44 L40 18 Z"
                 fill="rgba(0,217,126,0.10)" stroke="var(--green)" stroke-width="2" stroke-linejoin="round"/>
-          <!-- Beit Sahour marker (near Bethlehem) -->
           <g class="map-pin" transform="translate(48,118)">
-            <circle r="13" fill="rgba(0,217,126,0.18)"/>
+            <circle r="14" fill="rgba(0,217,126,0.15)"/>
             <path d="M0 -9 C 6 -9 6 3 0 9 C -6 3 -6 -9 0 -9 Z" fill="var(--green)"/>
-            <circle cx="0" cy="-3" r="2.4" fill="var(--navy)"/>
+            <circle cx="0" cy="-3" r="2.5" fill="var(--navy)"/>
           </g>
         </svg>
-        <p class="map-label" data-i18n="community.location">Beit Sahour</p>
+        <p class="map-label" data-i18n="community.location">بيت ساحور، فلسطين</p>
+        <p class="map-subtitle" data-i18n="community.story">بُني من الصفر. لعائلتَينا.</p>
       </div>
 
       <div class="community-side">
         <div class="card">
-          <div class="card-header"><span class="card-title" data-i18n="community.leaderboard">Top managers</span></div>
+          <div class="card-header">
+            <span class="card-title" data-i18n="community.leaderboard">أفضل المديرين</span>
+          </div>
           <ol class="leaderboard" id="leaderboard">
             <li class="leaderboard-row"><span class="lb-rank">1</span><span class="lb-name skeleton skeleton-text"></span><span class="lb-pts">—</span></li>
             <li class="leaderboard-row"><span class="lb-rank">2</span><span class="lb-name skeleton skeleton-text"></span><span class="lb-pts">—</span></li>
@@ -238,11 +339,13 @@
         </div>
 
         <div class="card join-card">
-          <div class="card-title" data-i18n="community.joinTitle">Join the IQPREC league</div>
-          <p class="join-hint" data-i18n="community.joinHint">Click to copy the join code</p>
+          <div class="card-title" data-i18n="community.joinTitle">انضم لدوري IQPREC</div>
+          <p class="join-hint" data-i18n="community.joinHint">انقر لنسخ كود الانضمام</p>
           <button class="join-code" id="join-code" type="button" data-action="copy-code">
             <code>IQPREC-2K26</code>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -251,25 +354,25 @@
 
   <!-- ===================== FAQ ===================== -->
   <section class="faq">
-    <h2 class="section-title" data-i18n="faq.title">Frequently asked questions</h2>
+    <h2 class="section-title" data-i18n="faq.title">الأسئلة الشائعة</h2>
     <div class="faq-list">
-      <details class="faq-item"><summary data-i18n="faq.q1">Q1</summary><p data-i18n="faq.a1">A1</p></details>
-      <details class="faq-item"><summary data-i18n="faq.q2">Q2</summary><p data-i18n="faq.a2">A2</p></details>
-      <details class="faq-item"><summary data-i18n="faq.q3">Q3</summary><p data-i18n="faq.a3">A3</p></details>
-      <details class="faq-item"><summary data-i18n="faq.q4">Q4</summary><p data-i18n="faq.a4">A4</p></details>
-      <details class="faq-item"><summary data-i18n="faq.q5">Q5</summary><p data-i18n="faq.a5">A5</p></details>
-      <details class="faq-item"><summary data-i18n="faq.q6">Q6</summary><p data-i18n="faq.a6">A6</p></details>
-      <details class="faq-item"><summary data-i18n="faq.q7">Q7</summary><p data-i18n="faq.a7">A7</p></details>
-      <details class="faq-item"><summary data-i18n="faq.q8">Q8</summary><p data-i18n="faq.a8">A8</p></details>
+      <details class="faq-item"><summary data-i18n="faq.q1">هل التجربة المجانية فعلاً مجانية؟</summary><p data-i18n="faq.a1">نعم، 7 أيام كاملة بدون بطاقة ائتمان. بعد انتهاء التجربة يمكنك الاشتراك أو التوقف.</p></details>
+      <details class="faq-item"><summary data-i18n="faq.q2">هل IQPREC بالعربية فقط؟</summary><p data-i18n="faq.a2">لا، النظام يدعم العربية والإنجليزية بالكامل. يمكنك التبديل في أي وقت.</p></details>
+      <details class="faq-item"><summary data-i18n="faq.q3">كيف يختلف IQPREC عن ChatGPT؟</summary><p data-i18n="faq.a3">IQPREC يحقن بيانات FPL الحية وسياق فريقك الشخصي وقواعد FPL الخبيرة وبيانات المجتمع العربي مباشرة في كل تحليل.</p></details>
+      <details class="faq-item"><summary data-i18n="faq.q4">هل البيانات محدّثة؟</summary><p data-i18n="faq.a4">نعم، نزامن بيانات الـ FPL كل 6 ساعات وقبل كل جولة.</p></details>
+      <details class="faq-item"><summary data-i18n="faq.q5">كيف أدخل مسابقة Falcon League؟</summary><p data-i18n="faq.a5">ادعُ 5 أصدقاء يسجّلون في التجربة المجانية، وانضم لدوري IQPREC المجتمعي في FPL. أعلى نقاط يفوز.</p></details>
+      <details class="faq-item"><summary data-i18n="faq.q6">هل يمكن الإلغاء في أي وقت؟</summary><p data-i18n="faq.a6">نعم، للاشتراك الشهري. باقة الموسم تبقى فعّالة حتى 31 مايو.</p></details>
+      <details class="faq-item"><summary data-i18n="faq.q7">ما هي طرق الدفع المقبولة؟</summary><p data-i18n="faq.a7">Stripe (كروت دولية) وPaytabs (دفع عربي). نضيف طرقاً جديدة باستمرار.</p></details>
+      <details class="faq-item"><summary data-i18n="faq.q8">هل هناك تطبيق موبايل؟</summary><p data-i18n="faq.a8">الموقع محسّن للموبايل بالكامل. تطبيق iOS وأندرويد قيد التطوير.</p></details>
     </div>
   </section>
 
   <!-- ===================== ASK ME ===================== -->
   <section class="askme">
-    <div class="card askme-card">
-      <h2 class="section-title" data-i18n="askme.title">Ask Jacob and Simon</h2>
-      <p class="askme-body" data-i18n="askme.body">IQPREC was built from zero by two friends — Jacob Qumsiyeh and Simon Haddad.</p>
-      <a class="btn btn-primary" href="/ask-me.html" data-i18n="askme.cta">Get in touch</a>
+    <div class="askme-card fade-up">
+      <h2 class="section-title" style="margin:0" data-i18n="askme.title">اسأل جاكوب وسيمون</h2>
+      <p class="askme-body" data-i18n="askme.body">IQPREC بُني من الصفر بواسطة صديقَين — جاكوب قمصية وسيمون حداد — من بيت ساحور، فلسطين. لديك سؤال أو اقتراح؟ نريد سماعك.</p>
+      <a class="btn btn-primary" href="/ask-me.html" data-i18n="askme.cta">تواصل معنا</a>
     </div>
   </section>
 
@@ -277,16 +380,19 @@
   <footer class="site-footer">
     <div class="footer-inner">
       <div class="footer-left">
-        <p data-i18n="footer.rights">All Rights Reserved © IQPREC</p>
+        <a class="footer-brand" href="/">
+          <span class="logo-iq">IQ</span><span class="logo-prec">PREC</span>
+        </a>
+        <p style="margin-block-start:8px" data-i18n="footer.rights">All Rights Reserved © IQPREC</p>
       </div>
       <nav class="footer-links" aria-label="Legal">
-        <a href="/about.html" data-i18n="footer.about">About</a>
-        <a href="/privacy.html" data-i18n="footer.privacy">Privacy</a>
-        <a href="/terms.html" data-i18n="footer.terms">Terms</a>
-        <a href="/cookies.html" data-i18n="footer.cookies">Cookies</a>
+        <a href="/about.html"    data-i18n="footer.about">About</a>
+        <a href="/privacy.html"  data-i18n="footer.privacy">Privacy</a>
+        <a href="/terms.html"    data-i18n="footer.terms">Terms</a>
+        <a href="/cookies.html"  data-i18n="footer.cookies">Cookies</a>
       </nav>
       <div class="footer-right">
-        <a href="https://jacobqum.dev" target="_blank" rel="noopener" data-i18n="footer.credit">Designed and Developed by Jacob Qumsiyeh</a>
+        <a href="https://jacobqum.dev" target="_blank" rel="noopener" data-i18n="footer.credit">Designed & Developed by Jacob Qumsiyeh</a>
       </div>
     </div>
   </footer>

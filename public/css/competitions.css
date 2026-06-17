@@ -1,9 +1,270 @@
 /* ============================================================
    IQPREC — competitions.css
-   Page-specific styles for competitions.html. Tokens come from
-   design-system.css; keep this file scoped to this page only.
    ============================================================ */
 
-[data-page="competitions"] .content-body {
-  /* page-specific layout goes here */
+/* ---------------- Page header ---------------- */
+.comp-head {
+  margin-block-end: var(--space-5);
 }
+
+.comp-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  margin-block-end: var(--space-1);
+}
+
+.comp-sub {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+[lang="ar"] .comp-sub { font-family: var(--font-arabic); line-height: 1.6; }
+
+@media (min-width: 600px) {
+  .comp-title { font-size: 1.85rem; }
+}
+
+/* ---------------- Active competition card ---------------- */
+.comp-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.comp-card::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 3px;
+  background: linear-gradient(90deg, var(--green-dark), var(--green));
+}
+
+.comp-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.comp-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.comp-status-badge.is-open   { background: rgba(0, 217, 126, 0.15); color: var(--green); }
+.comp-status-badge.is-closed { background: rgba(154, 170, 187, 0.15); color: var(--muted); }
+.comp-status-badge.is-ended  { background: rgba(245, 166, 35, 0.15); color: var(--gold); }
+
+/* Live dot next to open badge */
+.live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot { animation: none; }
+}
+
+/* ---------------- Prize podium ---------------- */
+.prize-podium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin-block-end: var(--space-5);
+}
+
+.prize-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  background: var(--navy-elevated);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--r-lg);
+  text-align: center;
+}
+
+.prize-place.is-first {
+  border-color: var(--gold);
+  background: rgba(245, 166, 35, 0.06);
+}
+
+.prize-medal {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.prize-rank {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.prize-amount {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.prize-place.is-first .prize-amount { color: var(--gold); }
+
+/* ---------------- Entry requirements ---------------- */
+.entry-reqs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-block-end: var(--space-5);
+}
+
+.entry-req-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--navy-elevated);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-dark);
+}
+
+.req-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.req-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text-mid);
+  line-height: 1.4;
+}
+
+[lang="ar"] .req-text { font-family: var(--font-arabic); }
+
+.req-status {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.req-status.met     { color: var(--green); }
+.req-status.unmet   { color: var(--muted); }
+.req-status.pending { color: var(--gold); }
+
+/* ---------------- Competition countdown ---------------- */
+.comp-countdown {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  margin-block: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 52px;
+}
+
+.countdown-value {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--white);
+  line-height: 1;
+}
+
+.countdown-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.countdown-sep {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  color: var(--border-dark);
+  align-self: flex-start;
+  margin-block-start: 2px;
+}
+
+/* ---------------- Leaderboard preview ---------------- */
+.comp-leaderboard { margin-block-end: var(--space-5); }
+
+.comp-leader-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
+  border-block-end: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.comp-leader-row:last-child { border-block-end: none; }
+.comp-leader-row.is-you { background: rgba(0, 217, 126, 0.06); }
+
+.leader-rank {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  min-width: 24px;
+  text-align: center;
+}
+
+.leader-rank.rank-1 { color: var(--gold); }
+.leader-rank.rank-2 { color: var(--muted); }
+.leader-rank.rank-3 { color: rgba(205, 127, 50, 0.9); }
+
+.leader-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--white);
+  font-size: 0.9rem;
+}
+
+.leader-name.is-you::after {
+  content: " (You)";
+  color: var(--green);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.leader-pts {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--white);
+  font-weight: 700;
+}
+
+/* ---------------- Terms section ---------------- */
+.comp-terms {
+  color: var(--text-light);
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+[lang="ar"] .comp-terms { font-family: var(--font-arabic); }
+
+.comp-terms a { color: var(--green); }

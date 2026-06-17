@@ -16,7 +16,7 @@ export const translations = {
     'brand.tagline': 'ذكاء. دقّة. كل جولة.',
 
     /* ---- Navigation ---- */
-    'nav.dashboard': 'لوحة التحكم',
+    'nav.dashboard': 'الرئيسية',
     'nav.captain': 'الكابتن',
     'nav.lineup': 'التشكيلة',
     'nav.transfers': 'الانتقالات',
@@ -24,7 +24,7 @@ export const translations = {
     'nav.playerIntel': 'معلومات اللاعبين',
     'nav.chips': 'الأوراق',
     'nav.miniLeague': 'الدوري المصغّر',
-    'nav.chat': 'المساعد الذكي',
+    'nav.chat': 'المساعد',
     'nav.community': 'المجتمع',
     'nav.competitions': 'المسابقات',
     'nav.arabStars': 'نجوم العرب',
@@ -136,6 +136,7 @@ export const translations = {
     'dash.transfers': 'الانتقالات المتاحة',
     'dash.connectShort': 'اربط الفريق',
     'dash.formation.title': 'تشكيلتك',
+    'dash.formation.squad': 'قائمة الفريق',
     'dash.formation.bench': 'الاحتياط',
     'dash.formation.empty': 'اربط فريقك لرؤية تشكيلتك على الملعب.',
     'dash.form': 'الفورم',
@@ -244,11 +245,45 @@ export const translations = {
     'milestone.next': 'الهدف القادم: {next}',
 
     /* ---- Landing: hero ---- */
-    'hero.h2': 'دقة الذكاء. كل جولة.',
-    'hero.subtitle': 'مساعدك الذكي لدوري الفانتازي بريميرليغ — تحليلات فورية وبيانات حقيقية وقرارات أذكى في كل جولة.',
+    'hero.eyebrow': '🧠 ذكاء اصطناعي للفانتازي',
+    'hero.h2': 'ذكاء. دقّة. كل جولة.',
+    'hero.subtitle': 'مساعدك الذكي لدوري الفانتازي بريميرليغ — قرارات أذكى بالعربي، بيانات حقيقية، كل أسبوع.',
     'hero.startTrial': 'ابدأ التجربة المجانية',
     'hero.howItWorks': 'كيف يعمل',
     'hero.scroll': 'مرّر للأسفل',
+    'hero.loadingPlayers': 'جاري تحميل النجوم…',
+    'hero.trust1': '7 أيام مجانية',
+    'hero.trust2': 'لا بطاقة مطلوبة',
+    'hero.trust3': 'بالعربية والإنجليزية',
+
+    /* ---- Arab Stars showcase ---- */
+    'arabStars.showcase.title': '⭐ نجوم عرب في الفانتازي',
+    'arabStars.showcase.sub': 'لاعبون عرب في الدوري الإنجليزي — تابعهم داخل IQPREC.',
+
+    /* ---- Pricing extras ---- */
+    'pricing.monthly.per': '/ شهر',
+    'pricing.season.per': '/ موسم',
+    'plan.f1': 'اختيار الكابتن بالذكاء الاصطناعي',
+    'plan.f2': 'مستشار الانتقالات',
+    'plan.f3': 'محادثة AI بالعربي',
+    'plan.f4': 'نجوم عرب + دوري صغير',
+    'plan.f5': 'أولوية الوصول للميزات الجديدة',
+
+    /* ---- Community ---- */
+    'community.story': 'بُني من الصفر. لعائلتَينا.',
+
+    /* ---- Dashboard extras ---- */
+    'dash.aiPick': 'اختيار الذكاء الاصطناعي',
+    'dash.captain': 'كابتن',
+    'captain.ownThis': 'من منافسيك يمتلكونه',
+    'captain.cta.sub': 'بناءً على المباريات والفورم ومنافسيك في الدوري الصغير.',
+
+    /* ---- Nav shortcuts ---- */
+    'nav.diff': 'الفِرَق',
+    'nav.intel': 'استخبارات',
+
+    /* ---- Features sub ---- */
+    'features.sub': 'لا تدرج. لا ميزات مخفية. كل شيء مشمول.',
 
     /* ---- Landing: nav ---- */
     'land.features': 'المزايا',
@@ -411,6 +446,103 @@ export const translations = {
     'transfersPage.rateLimited': 'طلبات كثيرة بسرعة. انتظر دقيقة ثم حاول مجدداً.',
     'transfersPage.noTeamTitle': 'اربط فريقك أولاً',
     'transfersPage.noTeamMsg': 'لاقتراح الانتقالات نحتاج لربط فريقك في الـ FPL.',
+
+    /* ---- Chat page ---- */
+    'chatPage.title': 'المساعد الذكي',
+    'chatPage.sub': 'اسألني أي شيء عن فريقك وعن FPL.',
+    'chatPage.placeholder': 'اكتب سؤالك هنا…',
+    'chatPage.send': 'إرسال',
+    'chatPage.thinking': 'جاري التفكير…',
+    'chatPage.you': 'أنت',
+    'chatPage.ai': 'IQPREC',
+    'chatPage.failed': 'تعذّر الإرسال. حاول مجدداً.',
+    'chatPage.rateLimited': 'طلبات كثيرة بسرعة. انتظر دقيقة ثم حاول مجدداً.',
+    'chatPage.jailbreak': 'IQPREC متخصص في FPL فقط. اسألني عن فريقك والكابتن والانتقالات.',
+    'chatPage.suspended': 'تم تعليق صلاحية الشات مؤقتاً بسبب تجاوزات متكررة.',
+    'chatPage.clear': 'مسح المحادثة',
+    'chatPage.greeting': 'أهلاً! أنا مساعدك الذكي في IQPREC. اسألني عن كابتنك أو تشكيلتك أو الفِرَق أو أي قرار في FPL وسأجيبك بالعربي.',
+
+    /* ---- Differentials page ---- */
+    'diffPage.title': 'اختيارات الفِرَق',
+    'diffPage.sub': 'اللاعبون منخفضو الملكية بأعلى عائد للجولة.',
+    'diffPage.generate': 'أنشئ اختيارات الفِرَق',
+    'diffPage.budget': 'الميزانية القصوى (اختياري)',
+    'diffPage.budgetPh': 'مثال: 7.5',
+    'diffPage.results': 'أفضل اختيارات الفِرَق',
+    'diffPage.failed': 'تعذّر إنشاء اختيارات الفِرَق',
+    'diffPage.rateLimited': 'طلبات كثيرة بسرعة. انتظر دقيقة ثم حاول مجدداً.',
+    'diffPage.empty': 'لا توجد فِرَق تستوفي المعايير لهذه الجولة بعد.',
+    'diffPage.hiddenGem': 'جوهرة مخفية',
+    'diffPage.ownership': 'الملكية',
+
+    /* ---- Arab Stars page ---- */
+    'arabPage.title': 'نجوم العرب',
+    'arabPage.sub': 'اللاعبون العرب النشطون في FPL هذا الموسم.',
+    'arabPage.empty': 'لا توجد بيانات لاعبين عرب لهذا الموسم بعد.',
+    'arabPage.failed': 'تعذّر تحميل بيانات نجوم العرب.',
+    'arabPage.player': 'اللاعب',
+    'arabPage.team': 'الفريق',
+    'arabPage.pos': 'المركز',
+    'arabPage.price': 'السعر',
+    'arabPage.form': 'الفورمة',
+    'arabPage.pts': 'النقاط',
+    'arabPage.goals': 'أهداف',
+    'arabPage.assists': 'تمريرات',
+    'arabPage.owned': 'الملكية',
+
+    /* ---- Player Intel page ---- */
+    'intelPage.title': 'معلومات اللاعبين',
+    'intelPage.sub': 'بيانات مفصّلة لأي لاعب نشط في FPL.',
+    'intelPage.search': 'ابحث عن لاعب',
+    'intelPage.searchPh': 'اكتب اسم اللاعب…',
+    'intelPage.noResults': 'لا توجد نتائج.',
+    'intelPage.selectPlayer': 'اختر لاعباً من نتائج البحث لرؤية إحصاءاته.',
+    'intelPage.failed': 'تعذّر تحميل بيانات اللاعب.',
+    'intelPage.form': 'الفورمة',
+    'intelPage.pts': 'النقاط',
+    'intelPage.xG': 'الأهداف المتوقعة',
+    'intelPage.xA': 'التمريرات المتوقعة',
+    'intelPage.minutes': 'الدقائق',
+    'intelPage.owned': 'الملكية',
+    'intelPage.price': 'السعر',
+    'intelPage.news': 'آخر الأخبار',
+    'intelPage.noNews': 'لا توجد أخبار',
+
+    /* ---- Mini-League page ---- */
+    'leaguePage.title': 'الدوري المصغّر',
+    'leaguePage.sub': 'راقب منافسيك وتتبّع الفجوات.',
+    'leaguePage.idLabel': 'معرّف الدوري',
+    'leaguePage.idPh': 'أدخل رقم الدوري…',
+    'leaguePage.load': 'تحميل الترتيب',
+    'leaguePage.rank': 'المركز',
+    'leaguePage.manager': 'المدير',
+    'leaguePage.team': 'الفريق',
+    'leaguePage.pts': 'النقاط',
+    'leaguePage.gwPts': 'نقاط الجولة',
+    'leaguePage.failed': 'تعذّر تحميل ترتيب الدوري.',
+    'leaguePage.empty': 'لا توجد ترتيبات بعد.',
+    'leaguePage.invalidId': 'الرجاء إدخال معرّف دوري صحيح.',
+    'leaguePage.notFound': 'لم يُعثر على الدوري. تحقق من الرقم وحاول مجدداً.',
+
+    /* ---- Chips page ---- */
+    'chipsPage.title': 'مخطط الأوراق',
+    'chipsPage.sub': 'متى تلعب أوراقك؟ دعنا نحلّل معك.',
+    'chipsPage.generate': 'أنشئ خطة الأوراق',
+    'chipsPage.wildcard': 'ورقة البدل',
+    'chipsPage.freehit': 'الضربة المجانية',
+    'chipsPage.triplecaptain': 'الكابتن الثلاثي',
+    'chipsPage.benchboost': 'تعزيز الاحتياطي',
+    'chipsPage.available': 'متاحة',
+    'chipsPage.used': 'مستخدمة',
+    'chipsPage.selectChips': 'اختر الأوراق المتاحة لديك',
+    'chipsPage.failed': 'تعذّر إنشاء توصية الأوراق',
+    'chipsPage.rateLimited': 'طلبات كثيرة بسرعة. انتظر دقيقة ثم حاول مجدداً.',
+    'chipsPage.noTeamTitle': 'اربط فريقك أولاً',
+    'chipsPage.noTeamMsg': 'لتحليل توقيت الأوراق نحتاج لمعرفة فريقك الحالي.',
+    'chipsPage.results': 'توصية الأوراق',
+    'chipsPage.playNow': 'العب الآن',
+    'chipsPage.hold': 'احتفظ بها',
+    'chipsPage.notYet': 'ليس الوقت',
   },
 
   en: {
@@ -539,6 +671,7 @@ export const translations = {
     'dash.transfers': 'Transfers available',
     'dash.connectShort': 'Connect Team',
     'dash.formation.title': 'Your squad',
+    'dash.formation.squad': 'Squad list',
     'dash.formation.bench': 'Bench',
     'dash.formation.empty': 'Connect your FPL team to see your lineup on the pitch.',
     'dash.form': 'Form',
@@ -647,11 +780,45 @@ export const translations = {
     'milestone.next': 'Next goal: {next}',
 
     /* ---- Landing: hero ---- */
+    'hero.eyebrow': '🧠 AI-Powered FPL Intelligence',
     'hero.h2': 'Precision Intelligence. Every Gameweek.',
     'hero.subtitle': 'Your AI co-manager for Fantasy Premier League — real-time data, your squad context, and smarter calls every gameweek.',
     'hero.startTrial': 'Start Free Trial',
     'hero.howItWorks': 'See How It Works',
     'hero.scroll': 'Scroll down',
+    'hero.loadingPlayers': 'Loading stars…',
+    'hero.trust1': '7 days free',
+    'hero.trust2': 'No card required',
+    'hero.trust3': 'Arabic & English',
+
+    /* ---- Arab Stars showcase ---- */
+    'arabStars.showcase.title': '⭐ Arab Stars in FPL',
+    'arabStars.showcase.sub': 'Arab players in the Premier League — track them inside IQPREC.',
+
+    /* ---- Pricing extras ---- */
+    'pricing.monthly.per': '/ month',
+    'pricing.season.per': '/ season',
+    'plan.f1': 'AI captain pick',
+    'plan.f2': 'Transfer advisor',
+    'plan.f3': 'AI chat in Arabic',
+    'plan.f4': 'Arab Stars + Mini-League',
+    'plan.f5': 'Priority access to new features',
+
+    /* ---- Community ---- */
+    'community.story': 'Built from zero. For our families.',
+
+    /* ---- Dashboard extras ---- */
+    'dash.aiPick': 'AI Pick',
+    'dash.captain': 'Captain',
+    'captain.ownThis': 'of your rivals own this',
+    'captain.cta.sub': 'Based on fixtures, form, and your mini-league rivals.',
+
+    /* ---- Nav shortcuts ---- */
+    'nav.diff': 'Differentials',
+    'nav.intel': 'Player Intel',
+
+    /* ---- Features sub ---- */
+    'features.sub': 'No tiers. No hidden features. Everything included.',
 
     /* ---- Landing: nav ---- */
     'land.features': 'Features',
@@ -814,6 +981,103 @@ export const translations = {
     'transfersPage.rateLimited': 'Too many requests too fast. Wait a minute and try again.',
     'transfersPage.noTeamTitle': 'Connect your team first',
     'transfersPage.noTeamMsg': 'We need your FPL team connected to suggest transfers.',
+
+    /* ---- Chat page ---- */
+    'chatPage.title': 'AI Assistant',
+    'chatPage.sub': 'Ask me anything about your squad and FPL.',
+    'chatPage.placeholder': 'Type your question here…',
+    'chatPage.send': 'Send',
+    'chatPage.thinking': 'Thinking…',
+    'chatPage.you': 'You',
+    'chatPage.ai': 'IQPREC',
+    'chatPage.failed': 'Could not send. Please try again.',
+    'chatPage.rateLimited': 'Too many requests. Wait a minute and try again.',
+    'chatPage.jailbreak': 'IQPREC is specialized in FPL only. Ask me about your squad, captain, or transfers.',
+    'chatPage.suspended': 'Chat access is temporarily suspended due to repeated violations.',
+    'chatPage.clear': 'Clear chat',
+    'chatPage.greeting': 'Hello! I\'m your IQPREC AI co-manager. Ask me about your captain, lineup, differentials, transfers, or any FPL decision — in Arabic or English.',
+
+    /* ---- Differentials page ---- */
+    'diffPage.title': 'Differentials',
+    'diffPage.sub': 'Low-owned, high-upside picks for rank gains.',
+    'diffPage.generate': 'Find Differentials',
+    'diffPage.budget': 'Max budget (optional)',
+    'diffPage.budgetPh': 'e.g. 7.5',
+    'diffPage.results': 'Top Differential Picks',
+    'diffPage.failed': 'Could not generate differentials',
+    'diffPage.rateLimited': 'Too many requests. Wait a minute and try again.',
+    'diffPage.empty': 'No differentials meeting criteria for this gameweek yet.',
+    'diffPage.hiddenGem': 'Hidden Gem',
+    'diffPage.ownership': 'ownership',
+
+    /* ---- Arab Stars page ---- */
+    'arabPage.title': 'Arab Stars',
+    'arabPage.sub': 'Arab players active in FPL this season.',
+    'arabPage.empty': 'No Arab player data for this season yet.',
+    'arabPage.failed': 'Could not load Arab Stars data.',
+    'arabPage.player': 'Player',
+    'arabPage.team': 'Team',
+    'arabPage.pos': 'Pos',
+    'arabPage.price': 'Price',
+    'arabPage.form': 'Form',
+    'arabPage.pts': 'Pts',
+    'arabPage.goals': 'G',
+    'arabPage.assists': 'A',
+    'arabPage.owned': 'Own%',
+
+    /* ---- Player Intel page ---- */
+    'intelPage.title': 'Player Intel',
+    'intelPage.sub': 'Detailed stats for any active FPL player.',
+    'intelPage.search': 'Search for a player',
+    'intelPage.searchPh': 'Type player name…',
+    'intelPage.noResults': 'No results found.',
+    'intelPage.selectPlayer': 'Select a player from the search results to view their stats.',
+    'intelPage.failed': 'Could not load player data.',
+    'intelPage.form': 'Form',
+    'intelPage.pts': 'Points',
+    'intelPage.xG': 'xG',
+    'intelPage.xA': 'xA',
+    'intelPage.minutes': 'Minutes',
+    'intelPage.owned': 'Ownership',
+    'intelPage.price': 'Price',
+    'intelPage.news': 'Latest news',
+    'intelPage.noNews': 'No news',
+
+    /* ---- Mini-League page ---- */
+    'leaguePage.title': 'Mini-League',
+    'leaguePage.sub': 'Track your rivals and spot the gaps.',
+    'leaguePage.idLabel': 'League ID',
+    'leaguePage.idPh': 'Enter league ID…',
+    'leaguePage.load': 'Load Standings',
+    'leaguePage.rank': 'Rank',
+    'leaguePage.manager': 'Manager',
+    'leaguePage.team': 'Team',
+    'leaguePage.pts': 'Points',
+    'leaguePage.gwPts': 'GW Pts',
+    'leaguePage.failed': 'Could not load the league standings.',
+    'leaguePage.empty': 'No standings yet.',
+    'leaguePage.invalidId': 'Please enter a valid league ID.',
+    'leaguePage.notFound': 'League not found. Check the ID and try again.',
+
+    /* ---- Chips page ---- */
+    'chipsPage.title': 'Chip Planner',
+    'chipsPage.sub': 'When should you play your chips? Let\'s analyse.',
+    'chipsPage.generate': 'Generate Chip Plan',
+    'chipsPage.wildcard': 'Wildcard',
+    'chipsPage.freehit': 'Free Hit',
+    'chipsPage.triplecaptain': 'Triple Captain',
+    'chipsPage.benchboost': 'Bench Boost',
+    'chipsPage.available': 'Available',
+    'chipsPage.used': 'Used',
+    'chipsPage.selectChips': 'Select your available chips',
+    'chipsPage.failed': 'Could not generate chip advice',
+    'chipsPage.rateLimited': 'Too many requests. Wait a minute and try again.',
+    'chipsPage.noTeamTitle': 'Connect your team first',
+    'chipsPage.noTeamMsg': 'We need your FPL team connected to analyse your chip timing.',
+    'chipsPage.results': 'Chip Recommendation',
+    'chipsPage.playNow': 'Play Now',
+    'chipsPage.hold': 'Hold',
+    'chipsPage.notYet': 'Not Yet',
   },
 };
 

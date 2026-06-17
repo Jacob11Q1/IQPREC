@@ -1,9 +1,150 @@
 /* ============================================================
    IQPREC — differentials.css
-   Page-specific styles for differentials.html. Tokens come from
-   design-system.css; keep this file scoped to this page only.
+   Page-specific styles. Shared page-head / gw-badge /
+   btn-generate / ai-analysis live in components.css.
    ============================================================ */
 
-[data-page="differentials"] .content-body {
-  /* page-specific layout goes here */
+/* ---------------- Controls bar ---------------- */
+.diff-controls {
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.budget-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-mid);
+  font-weight: 500;
+}
+
+.budget-input {
+  width: 120px;
+  background: var(--navy-card);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--r-sm);
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  transition: border-color var(--t-base);
+}
+
+.budget-input:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.budget-input::placeholder { color: var(--muted); }
+
+/* ---------------- Cards grid ---------------- */
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+/* ---------------- Individual card ---------------- */
+.diff-card {
+  background: var(--navy-card);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  position: relative;
+  transition: border-color var(--t-base), box-shadow var(--t-base);
+}
+
+.diff-card--gem {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.diff-card--skeleton { min-height: 120px; }
+
+.diff-rank {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-block-end: 6px;
+}
+
+.diff-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--white);
+  margin-block-end: 6px;
+}
+
+.diff-own {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--green);
+  background: rgba(0, 217, 126, 0.12);
+  border-radius: var(--r-sm);
+  padding: 2px 8px;
+  margin-block-end: 10px;
+}
+
+.diff-gem-badge {
+  position: absolute;
+  inset-block-start: 14px;
+  inset-inline-end: 16px;
+  background: var(--gold);
+  color: var(--text-dark);
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: var(--r-sm);
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diff-stats {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-block-end: 10px;
+}
+
+.diff-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.diff-stat-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diff-stat-value {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.diff-reasoning {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-mid);
+}
+
+.diff-reasoning p { margin: 0 0 6px; }
+.diff-reasoning p:last-child { margin: 0; }
+[lang="ar"] .diff-reasoning { font-family: var(--font-arabic); line-height: 1.8; }
+
+@media (min-width: 640px) {
+  .diff-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .diff-grid { grid-template-columns: repeat(3, 1fr); }
 }

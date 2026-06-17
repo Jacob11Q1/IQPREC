@@ -23,7 +23,7 @@
   user-select: none;
   white-space: nowrap;
   transition: background var(--t-fast), border-color var(--t-fast),
-    transform var(--t-fast), opacity var(--t-fast);
+    transform var(--t-fast), opacity var(--t-fast), box-shadow var(--t-fast);
 }
 
 [lang="ar"] .btn {
@@ -42,19 +42,29 @@
 }
 
 .btn-primary {
-  background: var(--green);
+  background: var(--gradient-green);
   color: var(--navy);
   font-weight: 600;
   border: 1px solid var(--green);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Keep the primary CTA clearly green on hover (a near-white --green-light
-   washed the button out). Brighten + lift for unmistakable feedback;
-   navy text stays high-contrast on the brighter green. */
-.btn-primary:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 4px 14px rgba(0, 217, 126, 0.35);
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--t-fast);
 }
+
+.btn-primary:hover {
+  box-shadow: var(--shadow-green);
+  transform: translateY(-1px);
+}
+.btn-primary:hover::after { opacity: 1; }
+.btn-primary:active { transform: translateY(0); }
 
 .btn-secondary {
   background: transparent;
@@ -110,11 +120,18 @@
   border: 1px solid var(--border-dark);
   border-radius: var(--r-lg);
   padding: var(--space-5);
+  transition: border-color var(--t-base), box-shadow var(--t-base), transform var(--t-base);
 }
 
 .card-elevated {
   background: var(--navy-elevated);
   box-shadow: var(--shadow-md);
+}
+
+.card-interactive:hover {
+  border-color: rgba(0, 217, 126, 0.25);
+  box-shadow: var(--shadow-green);
+  transform: translateY(-2px);
 }
 
 .card-header {
@@ -757,6 +774,52 @@
   .modal-overlay.open .modal { transform: scale(1); }
 }
 
+/* ---------------- Animation utilities ---------------- */
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo);
+}
+.fade-up.visible { opacity: 1; transform: translateY(0); }
+
+.fade-in {
+  opacity: 0;
+  transition: opacity 0.55s var(--ease-out-expo);
+}
+.fade-in.visible { opacity: 1; }
+
+.stagger-children .fade-up:nth-child(1)  { transition-delay: 0.05s; }
+.stagger-children .fade-up:nth-child(2)  { transition-delay: 0.10s; }
+.stagger-children .fade-up:nth-child(3)  { transition-delay: 0.15s; }
+.stagger-children .fade-up:nth-child(4)  { transition-delay: 0.20s; }
+.stagger-children .fade-up:nth-child(5)  { transition-delay: 0.25s; }
+.stagger-children .fade-up:nth-child(6)  { transition-delay: 0.30s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up, .fade-in { opacity: 1 !important; transform: none !important; transition: none !important; }
+}
+
+.text-gradient {
+  background: var(--gradient-green);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-gold {
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes soft-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 217, 126, 0.3); }
+  50%       { box-shadow: 0 0 0 8px rgba(0, 217, 126, 0); }
+}
+.pulse-green { animation: soft-pulse 2.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .pulse-green { animation: none; } }
+
 /* ============================================================
    Day 6 — Auth pages (login / register / onboarding)
    Shared, reusable across all three standalone auth pages.
@@ -874,3 +937,151 @@
   margin-block-end: var(--space-4);
   color: var(--green);
 }
+
+/* ============================================================
+   Shared page chrome — used across all AI feature pages
+   (captain, transfers, lineup, chips, differentials, etc.)
+   ============================================================ */
+
+/* ---------------- Page header ---------------- */
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.page-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.page-sub {
+  margin-block-start: var(--space-1);
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+[lang="ar"] .page-sub { font-family: var(--font-arabic); line-height: 1.6; }
+
+@media (min-width: 600px) {
+  .page-title { font-size: 1.85rem; }
+}
+
+.gw-badge {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--green);
+  background: rgba(0, 217, 126, 0.12);
+  border: 1px solid rgba(0, 217, 126, 0.35);
+  border-radius: var(--r-md);
+  padding: 6px 12px;
+}
+
+/* ---------------- AI generate bar ---------------- */
+
+.generate-bar { margin-block-end: var(--space-5); }
+
+.btn-generate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-generate .bolt { width: 20px; height: 20px; }
+.btn-generate.is-loading { opacity: 0.7; pointer-events: none; }
+
+.btn-generate:not(:disabled) {
+  animation: generate-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes generate-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 217, 126, 0.4); }
+  50%       { box-shadow: 0 0 0 10px rgba(0, 217, 126, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-generate:not(:disabled) { animation: none; }
+}
+
+@media (min-width: 600px) {
+  .btn-generate { width: auto; min-width: 260px; }
+}
+
+/* ---------------- AI analysis panel ---------------- */
+
+.ai-analysis { margin-block-end: var(--space-5); }
+
+.analysis-body {
+  color: var(--text-mid);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.analysis-body p { margin: 0 0 var(--space-3); }
+.analysis-body p:last-child { margin-block-end: 0; }
+[lang="ar"] .analysis-body { font-family: var(--font-arabic); line-height: 1.8; }
+
+/* ---------------- Data table (arab-stars, mini-league) ---------------- */
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.data-table th {
+  padding: 10px 12px;
+  text-align: start;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-block-end: 1px solid var(--border-dark);
+  white-space: nowrap;
+  background: var(--navy-card);
+}
+
+.data-table td {
+  padding: 10px 12px;
+  border-block-end: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.data-table tr:last-child td { border-block-end: none; }
+.data-table tr:hover td { background: rgba(255, 255, 255, 0.03); }
+
+/* ---------------- Badge count ---------------- */
+
+.badge-count {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  background: var(--navy-elevated);
+  border: 1px solid var(--border-dark);
+  border-radius: 20px;
+  padding: 2px 10px;
+  color: var(--muted);
+}
+
+/* ---------------- Utility helpers ---------------- */
+
+.w-100 { width: 100%; }
+.mono  { font-family: var(--font-mono); }
+.fw-bold { font-weight: 700; color: var(--white); }

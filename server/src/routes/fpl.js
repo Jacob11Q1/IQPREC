@@ -9,7 +9,8 @@ import { Router } from 'express';
 
 import * as fpl from '../services/fpl.service.js';
 import * as cache from '../services/cache.service.js';
-import { supabase, hasDb } from '../db/client.js';
+import { hasDb } from '../db/client.js';
+import { queryOne } from '../db/query.js';
 import { verifyToken } from '../middleware/auth/verify-token.js';
 import { checkSubscription } from '../middleware/auth/check-subscription.js';
 import { createRateLimiter } from '../middleware/security/rate-limiter.js';
@@ -18,17 +19,16 @@ const router = Router();
 
 const byUser = (req) => req.user?.userId || `ip:${req.ip}`;
 
-/* Per-route limiters (in addition to the global 100/60s/IP). */
 const validateTeamLimiter = createRateLimiter({
   name: 'fpl-validate',
   windowMs: 60_000,
-  max: 10, // 10 per minute per user
+  max: 10,
   keyResolver: byUser,
 });
 const syncSquadLimiter = createRateLimiter({
   name: 'fpl-sync-squad',
   windowMs: 60 * 60_000,
-  max: 3, // 3 per hour per user
+  max: 3,
   keyResolver: byUser,
 });
 
@@ -53,7 +53,6 @@ function setFreshness(res, stale) {
    PUBLIC routes
    ============================================================ */
 
-// GET /api/v1/fpl/bootstrap — current gameweek + teams list (6h cache).
 router.get('/bootstrap', async (req, res, next) => {
   try {
     const { data, stale } = await fpl.getBootstrapResult();
@@ -77,7 +76,6 @@ router.get('/bootstrap', async (req, res, next) => {
   }
 });
 
-// GET /api/v1/fpl/gameweek/current
 router.get('/gameweek/current', async (req, res, next) => {
   try {
     const gw = await fpl.getCurrentGameweek();
@@ -87,7 +85,6 @@ router.get('/gameweek/current', async (req, res, next) => {
   }
 });
 
-// GET /api/v1/fpl/fixtures?gw=
 router.get('/fixtures', async (req, res, next) => {
   try {
     const gwRaw = req.query.gw;
@@ -103,18 +100,16 @@ router.get('/fixtures', async (req, res, next) => {
   }
 });
 
-// GET /api/v1/fpl/stats/milestone — from ultimate_milestone_tracker.
 router.get('/stats/milestone', async (req, res, next) => {
   try {
     if (!hasDb()) return ok(res, { currentUsers: 0, nextMilestone: 20 });
-    const { data } = await supabase
-      .from('ultimate_milestone_tracker')
-      .select('current_users, next_milestone')
-      .eq('season', fpl.CURRENT_SEASON)
-      .maybeSingle();
+    const tracker = await queryOne(
+      `SELECT current_users, next_milestone FROM ultimate_milestone_tracker WHERE season = $1`,
+      [fpl.CURRENT_SEASON]
+    );
     return ok(res, {
-      currentUsers: data?.current_users ?? 0,
-      nextMilestone: data?.next_milestone ?? 20,
+      currentUsers: tracker?.current_users ?? 0,
+      nextMilestone: tracker?.next_milestone ?? 20,
     });
   } catch (err) {
     next(err);
@@ -126,7 +121,6 @@ router.get('/stats/milestone', async (req, res, next) => {
    ============================================================ */
 const auth = [verifyToken, checkSubscription];
 
-// GET /api/v1/fpl/players/search?q=&type=
 router.get('/players/search', ...auth, async (req, res, next) => {
   try {
     const q = String(req.query.q || '').trim();
@@ -141,14 +135,12 @@ router.get('/players/search', ...auth, async (req, res, next) => {
   }
 });
 
-// GET /api/v1/fpl/players/:id — full stats, current-season active only.
 router.get('/players/:id', ...auth, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) {
       return fail(res, 400, 'VALIDATION_ERROR', 'Invalid player id.');
     }
-    // getPlayerSummary throws FPL_3010 if the player isn't current/active.
     const summary = await fpl.getPlayerSummary(id);
     const baseMap = await fpl.getPlayersByIds([id]);
     return ok(res, { player: baseMap.get(id) || null, summary });
@@ -160,7 +152,6 @@ router.get('/players/:id', ...auth, async (req, res, next) => {
   }
 });
 
-// GET /api/v1/fpl/validate-team/:id — 10/min/user.
 router.get('/validate-team/:id', ...auth, validateTeamLimiter, async (req, res, next) => {
   try {
     const id = Number(req.params.id);
@@ -174,18 +165,14 @@ router.get('/validate-team/:id', ...auth, validateTeamLimiter, async (req, res, 
   }
 });
 
-/* Resolve the signed-in user's stored FPL team id. */
 async function getUserFplTeamId(userId) {
   if (!hasDb()) return null;
-  const { data } = await supabase
-    .from('users')
-    .select('fpl_team_id, fpl_team_name')
-    .eq('id', userId)
-    .maybeSingle();
-  return data || null;
+  return queryOne(
+    'SELECT fpl_team_id, fpl_team_name FROM users WHERE id = $1',
+    [userId]
+  );
 }
 
-/* Build an enriched squad object from picks + current player rows. */
 async function buildEnrichedSquad(fplTeamId, gameweek) {
   const team = await fpl.getUserTeam(fplTeamId, gameweek);
   const ids = team.picks.map((p) => p.element);
@@ -197,7 +184,6 @@ async function buildEnrichedSquad(fplTeamId, gameweek) {
   return { ...team, gameweek, picks };
 }
 
-// GET /api/v1/fpl/my-squad — enriched current-gameweek squad.
 router.get('/my-squad', ...auth, async (req, res, next) => {
   try {
     const userRow = await getUserFplTeamId(req.user.userId);
@@ -215,7 +201,6 @@ router.get('/my-squad', ...auth, async (req, res, next) => {
   }
 });
 
-// POST /api/v1/fpl/sync-squad — force re-sync. 3/hour/user.
 router.post('/sync-squad', ...auth, syncSquadLimiter, async (req, res, next) => {
   try {
     const userRow = await getUserFplTeamId(req.user.userId);
@@ -223,7 +208,6 @@ router.post('/sync-squad', ...auth, syncSquadLimiter, async (req, res, next) => 
       return fail(res, 400, 'FPL_NO_TEAM', 'No FPL team connected to your account.');
     }
     const { gameweek } = await fpl.getCurrentGameweek();
-    // Bust the cached squad so the rebuild fetches fresh.
     await cache.del(`fpl:team:${userRow.fpl_team_id}:gw${gameweek}`);
     const squad = await buildEnrichedSquad(userRow.fpl_team_id, gameweek);
     return ok(res, { connected: true, squad });
@@ -232,12 +216,28 @@ router.post('/sync-squad', ...auth, syncSquadLimiter, async (req, res, next) => 
   }
 });
 
-// GET /api/v1/fpl/arab-stars — Arab players, current season, not removed.
-router.get('/arab-stars', ...auth, async (req, res, next) => {
+router.get('/arab-stars', async (req, res, next) => {
   try {
     const players = await fpl.getArabStars();
-    return ok(res, { players });
+    return ok(res, players);
   } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/mini-league/:id', ...auth, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return fail(res, 400, 'VALIDATION_ERROR', 'Invalid league id.');
+    }
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const standings = await fpl.getMiniLeague(id, page);
+    return ok(res, { standings, leagueId: id, page });
+  } catch (err) {
+    if (err.code === 'FPL_3004') {
+      return fail(res, 404, 'FPL_3004', 'Mini-league not found.');
+    }
     next(err);
   }
 });

@@ -1,74 +1,18 @@
 /* ============================================================
    IQPREC — captain.css
-   Captain Picker page. Tokens come from design-system.css; player-circle,
-   buttons, skeletons and the progress-ring base come from components.css.
-   Mobile-first (375px) → larger screens via min-width queries.
+   Page-specific styles. Shared page-head / gw-badge / btn-generate /
+   ai-analysis / analysis-body live in components.css.
    ============================================================ */
 
-/* ---------------- Shared page chrome (head + generate bar) ---------------- */
-.page-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-block-end: var(--space-4);
-}
-.page-title {
-  font-family: var(--font-heading);
-  font-size: 1.5rem;
-  line-height: 1.2;
-  margin: 0;
-}
-.page-sub {
-  margin: var(--space-1) 0 0;
-  color: var(--text-light);
-  font-size: 0.9rem;
-}
-[lang="ar"] .page-sub { font-family: var(--font-arabic); line-height: 1.6; }
-
-.gw-badge {
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--green);
-  background: rgba(0, 217, 126, 0.12);
-  border: 1px solid rgba(0, 217, 126, 0.35);
-  border-radius: var(--r-md);
-  padding: 6px 12px;
-}
-
-.generate-bar { margin-block-end: var(--space-5); }
-.btn-generate {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  justify-content: center;
-}
-.btn-generate .bolt { width: 20px; height: 20px; }
-.btn-generate.is-loading { opacity: 0.7; pointer-events: none; }
-.btn-generate:not(:disabled) {
-  animation: cap-pulse 2.2s ease-in-out infinite;
-}
-@keyframes cap-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 217, 126, 0.4); }
-  50%      { box-shadow: 0 0 0 10px rgba(0, 217, 126, 0); }
-}
-@media (min-width: 600px) {
-  .btn-generate { width: auto; min-width: 280px; }
-  .page-title { font-size: 1.85rem; }
-}
-
-/* ---------------- Confidence ring tones (self-contained) ---------------- */
+/* ---------------- Confidence ring tones ---------------- */
 .captain-ring { flex-shrink: 0; }
 .captain-ring.ring-green .ring-fill { stroke: var(--green); }
 .captain-ring.ring-gold  .ring-fill { stroke: var(--gold); }
 .captain-ring.ring-red   .ring-fill { stroke: var(--red); }
 .captain-ring .ring-fill { transition: stroke-dashoffset 1s ease; }
+
 @media (prefers-reduced-motion: reduce) {
   .captain-ring .ring-fill { transition: none; }
-  .btn-generate:not(:disabled) { animation: none; }
 }
 
 /* ---------------- Results grid ---------------- */
@@ -78,6 +22,7 @@
   gap: var(--space-4);
   margin-block-end: var(--space-5);
 }
+
 @media (min-width: 860px) {
   .captain-results { grid-template-columns: repeat(3, 1fr); }
 }
@@ -86,17 +31,18 @@
 .captain-pick-card {
   position: relative;
   background: var(--navy-card);
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
-  border-top: 4px solid var(--muted);
+  border: 1px solid var(--border-dark);
+  border-block-start: 4px solid var(--muted);
   border-radius: var(--r-lg);
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
-.captain-pick-card.badge-gold   { border-top-color: var(--gold); }
-.captain-pick-card.badge-silver { border-top-color: var(--muted); }
-.captain-pick-card.badge-blue   { border-top-color: var(--blue); }
+
+.captain-pick-card.badge-gold   { border-block-start-color: var(--gold); }
+.captain-pick-card.badge-silver { border-block-start-color: var(--muted); }
+.captain-pick-card.badge-blue   { border-block-start-color: var(--blue); }
 
 .pick-badge {
   align-self: flex-start;
@@ -108,6 +54,7 @@
   border-radius: 999px;
   color: var(--navy);
 }
+
 .badge-gold   .pick-badge { background: var(--gold); }
 .badge-silver .pick-badge { background: var(--muted); }
 .badge-blue   .pick-badge { background: var(--blue); color: var(--white); }
@@ -120,15 +67,23 @@
   gap: var(--space-3);
   margin-block: var(--space-2);
 }
-.player-circle.jersey-0 { border-color: var(--gold); }
-.player-circle.jersey-1 { border-color: var(--muted); }
-.player-circle.jersey-2 { border-color: var(--blue); }
+
+/* Photo ring inside pick cards — explicit size, independent of dashboard.css responsive rules */
+.captain-pick-card .player-photo-ring {
+  width: 64px !important;
+  height: 64px !important;
+}
+
+.player-photo-ring.jersey-0 { --pos-color: var(--gold); }
+.player-photo-ring.jersey-1 { --pos-color: var(--muted); }
+.player-photo-ring.jersey-2 { --pos-color: var(--blue); }
 
 .pick-name {
   font-family: var(--font-heading);
   font-size: 1.15rem;
   color: var(--white);
 }
+
 .pick-reason {
   color: var(--text-mid);
   font-size: 0.9rem;
@@ -136,16 +91,3 @@
 }
 .pick-reason p { margin: 0 0 var(--space-2); }
 [lang="ar"] .pick-reason { font-family: var(--font-arabic); line-height: 1.7; }
-
-/* ---------------- AI analysis panel ---------------- */
-.ai-analysis { margin-block-end: var(--space-5); }
-.analysis-body {
-  color: var(--text-mid);
-  line-height: 1.6;
-  font-size: 0.95rem;
-}
-.analysis-body p { margin: 0 0 var(--space-3); }
-.analysis-body p:last-child { margin-bottom: 0; }
-[lang="ar"] .analysis-body { font-family: var(--font-arabic); line-height: 1.8; }
-
-.w-100 { width: 100%; }

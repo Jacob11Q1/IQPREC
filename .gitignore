@@ -19,3 +19,19 @@ Thumbs.db
 
 # Build artifacts (there should be none — no build step)
 dist/
+
+# Claude Code local session data
+.claude/
+
+# Old unused React leftover
+client/
+
+# Debug/test files - never commit
+server/cookies.txt
+server/test-sftp.js
+server/test-ssh.js
+server/deploy-dist.js
+deploy-temp.js
+server/schema.sql
+server/src/db/query.js
+server/src/routes/oauth.js

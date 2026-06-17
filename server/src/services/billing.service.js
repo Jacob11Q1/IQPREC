@@ -3,14 +3,12 @@
    Stripe billing for IQPREC's single plan, in TWO distinct modes:
      • Monthly  $15  → mode 'subscription' (recurring)
      • Season   $110 → mode 'payment'      (one-time, expires May 31)
-   Mixing these up grants permanent access or revokes it early, so the
-   mode is derived strictly from the price ID and the season expiry is
-   computed explicitly.
    ============================================================ */
 
 import { stripe, hasStripe } from '../lib/stripe.js';
 import { env } from '../config/env.js';
-import { supabase, hasDb } from '../db/client.js';
+import { hasDb } from '../db/client.js';
+import { queryOne, execute } from '../db/query.js';
 import { sendReceiptEmail } from './receipt.service.js';
 import { updateMilestoneTracker } from './referral.service.js';
 
@@ -31,7 +29,6 @@ function requireStripe() {
 
 const FRONTEND = () => env.FRONTEND_URL || 'https://iqprec.com';
 
-/** Map a price ID to its Stripe checkout mode + our plan label. */
 function resolvePlan(priceId) {
   if (priceId && priceId === env.STRIPE_PRICE_MONTHLY) {
     return { mode: 'subscription', plan: 'monthly' };
@@ -52,24 +49,22 @@ export async function createCheckoutSession(userId, email, priceId, couponCode) 
   requireStripe();
   const { mode, plan } = resolvePlan(priceId);
 
-  // Reuse or create the Stripe customer.
-  const { data: user } = await supabase
-    .from('users')
-    .select('stripe_customer_id')
-    .eq('id', userId)
-    .maybeSingle();
+  const userRow = await queryOne(
+    'SELECT stripe_customer_id FROM users WHERE id = $1',
+    [userId]
+  );
 
-  let customerId = user?.stripe_customer_id || null;
+  let customerId = userRow?.stripe_customer_id || null;
   if (!customerId) {
     const customer = await stripe.customers.create({
       email,
       metadata: { userId: String(userId) },
     });
     customerId = customer.id;
-    await supabase
-      .from('users')
-      .update({ stripe_customer_id: customerId })
-      .eq('id', userId);
+    await execute(
+      'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+      [customerId, userId]
+    );
   }
 
   const params = {
@@ -77,11 +72,10 @@ export async function createCheckoutSession(userId, email, priceId, couponCode) 
     mode,
     line_items: [{ price: priceId, quantity: 1 }],
     metadata: { userId: String(userId), plan },
-    success_url: `${FRONTEND()}/billing.html?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${FRONTEND()}/billing.html?cancelled=true`,
+    success_url: `${FRONTEND()}/billing?success=true`,
+    cancel_url: `${FRONTEND()}/billing?cancelled=true`,
   };
 
-  // Pass the userId down to the subscription object too (used by webhooks).
   if (mode === 'subscription') {
     params.subscription_data = { metadata: { userId: String(userId) } };
   }
@@ -94,15 +88,47 @@ export async function createCheckoutSession(userId, email, priceId, couponCode) 
 }
 
 /* ------------------------------------------------------------
+   Trial checkout — card required upfront, auto-charges after 7 days.
+   ------------------------------------------------------------ */
+export async function createTrialCheckoutSession(userId, email) {
+  requireStripe();
+
+  const userRow = await queryOne('SELECT stripe_customer_id FROM users WHERE id = $1', [userId]);
+  let customerId = userRow?.stripe_customer_id || null;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email,
+      metadata: { userId: String(userId) },
+    });
+    customerId = customer.id;
+    await execute('UPDATE users SET stripe_customer_id = $1 WHERE id = $2', [customerId, userId]);
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'subscription',
+    line_items: [{ price: env.STRIPE_PRICE_MONTHLY, quantity: 1 }],
+    subscription_data: {
+      trial_period_days: 7,
+      metadata: { userId: String(userId) },
+    },
+    payment_method_collection: 'always',
+    metadata: { userId: String(userId), plan: 'monthly', trial: 'true' },
+    success_url: `${FRONTEND()}/billing?trial=started`,
+    cancel_url: `${FRONTEND()}/start-trial?cancelled=true`,
+  });
+
+  return { url: session.url };
+}
+
+/* ------------------------------------------------------------
    Season expiry helper — next May 31 @ 00:00 UTC.
-   If we're already past May, roll to next year.
    ------------------------------------------------------------ */
 export function nextMay31() {
   const now = new Date();
-  const month = now.getUTCMonth(); // 0=Jan … 4=May
-  // After May (month > 4) → next year; otherwise this year.
+  const month = now.getUTCMonth();
   const year = month > 4 ? now.getUTCFullYear() + 1 : now.getUTCFullYear();
-  return new Date(Date.UTC(year, 4, 31, 0, 0, 0)); // May = index 4
+  return new Date(Date.UTC(year, 4, 31, 0, 0, 0));
 }
 
 /* ------------------------------------------------------------
@@ -121,13 +147,11 @@ export async function activatePlan(
     return;
   }
 
-  // Idempotency: skip if we've already processed this Stripe event.
   if (stripeEventId) {
-    const { data: seen } = await supabase
-      .from('subscriptions')
-      .select('id')
-      .eq('stripe_event_id', stripeEventId)
-      .maybeSingle();
+    const seen = await queryOne(
+      'SELECT id FROM subscriptions WHERE stripe_event_id = $1',
+      [stripeEventId]
+    );
     if (seen) {
       console.log(`[billing] event ${stripeEventId} already processed — skipping.`);
       return;
@@ -136,35 +160,44 @@ export async function activatePlan(
 
   const periodEnd = plan === 'season' ? nextMay31() : null;
 
-  // 1) Promote the user.
-  const userUpdate = { subscription_status: 'active', plan };
-  if (periodEnd) userUpdate.plan_expires_at = periodEnd.toISOString();
-  if (stripeSubscriptionId) userUpdate.stripe_subscription_id = stripeSubscriptionId;
-  await supabase.from('users').update(userUpdate).eq('id', userId);
+  // Build dynamic UPDATE (only set columns that have values).
+  const setClauses = ['subscription_status = $1', 'plan = $2'];
+  const vals = ['active', plan];
+  if (periodEnd) {
+    setClauses.push(`plan_expires_at = $${vals.length + 1}`);
+    vals.push(periodEnd.toISOString());
+  }
+  if (stripeSubscriptionId) {
+    setClauses.push(`stripe_subscription_id = $${vals.length + 1}`);
+    vals.push(stripeSubscriptionId);
+  }
+  vals.push(userId);
+  await execute(
+    `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${vals.length}`,
+    vals
+  );
 
-  // 2) Record the subscription row.
-  await supabase.from('subscriptions').insert({
-    user_id: userId,
-    stripe_subscription_id: stripeSubscriptionId || null,
-    stripe_event_id: stripeEventId || null,
-    plan,
-    billing_cycle: billingCycle,
-    status: 'active',
-    amount_paid: amountPaid,
-    currency: 'usd',
-    period_start: new Date().toISOString(),
-    period_end: periodEnd ? periodEnd.toISOString() : null,
-    payment_provider: 'stripe',
-  });
+  await execute(
+    `INSERT INTO subscriptions
+       (user_id, stripe_subscription_id, stripe_event_id, plan, billing_cycle,
+        status, amount_paid, currency, period_start, period_end, payment_provider)
+     VALUES ($1, $2, $3, $4, $5, 'active', $6, 'usd', NOW(), $7, 'stripe')`,
+    [
+      userId,
+      stripeSubscriptionId || null,
+      stripeEventId || null,
+      plan,
+      billingCycle,
+      amountPaid,
+      periodEnd ? periodEnd.toISOString() : null,
+    ]
+  );
 
-  // 3) Fetch user contact details for the receipt.
-  const { data: user } = await supabase
-    .from('users')
-    .select('email, full_name, language')
-    .eq('id', userId)
-    .maybeSingle();
+  const user = await queryOne(
+    'SELECT email, full_name, language FROM users WHERE id = $1',
+    [userId]
+  );
 
-  // 4) Official receipt — immediately.
   if (user?.email) {
     await sendReceiptEmail({
       userId,
@@ -179,7 +212,6 @@ export async function activatePlan(
     });
   }
 
-  // 5) Advance the community milestone tracker (may auto-open a competition).
   try {
     await updateMilestoneTracker();
   } catch (err) {
@@ -194,14 +226,14 @@ export async function activatePlan(
    ------------------------------------------------------------ */
 export async function deactivateSubscription(stripeSubscriptionId) {
   if (!hasDb() || !stripeSubscriptionId) return;
-  await supabase
-    .from('users')
-    .update({ subscription_status: 'expired' })
-    .eq('stripe_subscription_id', stripeSubscriptionId);
-  await supabase
-    .from('subscriptions')
-    .update({ status: 'cancelled' })
-    .eq('stripe_subscription_id', stripeSubscriptionId);
+  await execute(
+    `UPDATE users SET subscription_status = 'expired' WHERE stripe_subscription_id = $1`,
+    [stripeSubscriptionId]
+  );
+  await execute(
+    `UPDATE subscriptions SET status = 'cancelled' WHERE stripe_subscription_id = $1`,
+    [stripeSubscriptionId]
+  );
   console.log(`[billing] subscription ${stripeSubscriptionId} deactivated.`);
 }
 
@@ -218,7 +250,7 @@ export async function getPortalSession(stripeCustomerId) {
   }
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
-    return_url: `${FRONTEND()}/billing.html`,
+    return_url: `${FRONTEND()}/billing`,
   });
   return { url: portalSession.url };
 }

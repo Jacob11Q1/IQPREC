@@ -1,9 +1,65 @@
 /* ============================================================
    IQPREC — mini-league.css
-   Page-specific styles for mini-league.html. Tokens come from
-   design-system.css; keep this file scoped to this page only.
+   Page-specific styles. Shared data-table / table-scroll /
+   badge-count / mono / fw-bold live in components.css.
    ============================================================ */
 
-[data-page="mini-league"] .content-body {
-  /* page-specific layout goes here */
+/* ---------------- Search bar ---------------- */
+.league-search-bar { padding: 16px; }
+
+.league-search-field {
+  display: flex;
+  gap: 10px;
+  margin-block-start: 8px;
+  flex-wrap: wrap;
 }
+
+.league-search-field .search-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--navy-elevated);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--r-md);
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  transition: border-color var(--t-base);
+  box-sizing: border-box;
+}
+
+.league-search-field .search-input:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+.league-search-field .search-input::placeholder { color: var(--muted); }
+
+.league-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-block-start: 8px;
+}
+
+/* ---------------- Rank cell ---------------- */
+.rank-cell {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.team-name-cell {
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* ---------------- Rank movement arrows ---------------- */
+.rank-arrow {
+  font-size: 0.7rem;
+  margin-inline-start: 4px;
+}
+
+.rank-up   { color: var(--green); }
+.rank-down { color: var(--red); }
+.rank-same { color: var(--muted); }

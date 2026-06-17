@@ -68,6 +68,10 @@ export function fetchArabStars() {
   return unwrap(api.get('/fpl/arab-stars'));
 }
 
+export function fetchMiniLeague(leagueId, page = 1) {
+  return unwrap(api.get(`/fpl/mini-league/${encodeURIComponent(leagueId)}?page=${page}`));
+}
+
 /* ------------------------------------------------------------
    debounce(fn, wait) — returns a debounced version of fn.
    For async fns it resolves with the latest call's result.

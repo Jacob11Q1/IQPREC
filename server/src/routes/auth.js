@@ -1,18 +1,6 @@
 /* ============================================================
-   IQPREC — routes/auth.js  (Day 5: Auth Backend, zero vulnerabilities)
-   Mounted at /api/v1/auth behind authLimiter (5/15min/IP) — see
-   routes/index.js. Every body-bearing route runs validateBody(Zod);
-   sanitizeInput already ran globally in index.js.
-
-   Anti-abuse posture:
-     • Email enumeration: register + forgot-password respond identically
-       whether or not the account exists.
-     • Timing attacks: login runs bcrypt.compare against a constant fake
-       hash for unknown emails; forgot-password waits 100ms for misses.
-     • Brute force: 5 failed logins → 15-min lock + security email.
-     • Tokens: zero tokens issued before email verification. RS256 access
-       (15m) in body; refresh (64 bytes) only in an httpOnly Secure
-       SameSite=Strict cookie, rotated on every refresh.
+   IQPREC — routes/auth.js  (Pentagon L1/L2/L6)
+   Mounted at /api/v1/auth behind authLimiter (5/15min/IP).
    ============================================================ */
 
 import { Router } from 'express';
@@ -20,7 +8,8 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 import { isProduction, isDevelopment } from '../config/env.js';
-import { supabase, hasDb } from '../db/client.js';
+import { hasDb } from '../db/client.js';
+import { queryOne, execute, returning } from '../db/query.js';
 import { redis, isRedisReady } from '../lib/redis.js';
 import { validateBody } from '../middleware/security/validate-body.js';
 import { verifyToken } from '../middleware/auth/verify-token.js';
@@ -60,15 +49,13 @@ const router = Router();
 const BCRYPT_ROUNDS = 12;
 const TRIAL_DAYS = 7;
 const REFRESH_COOKIE = 'iqprec_rt';
-const REFRESH_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-const VERIFY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-const RESET_TTL_MS = 60 * 60 * 1000; // 1 hour
+const REFRESH_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
+const RESET_TTL_MS = 60 * 60 * 1000;
 const MAX_FAILED_ATTEMPTS = 5;
-const LOCK_MS = 15 * 60 * 1000; // 15 minutes
-const FORGOT_LIMIT = 3; // per hour per email
+const LOCK_MS = 15 * 60 * 1000;
+const FORGOT_LIMIT = 3;
 
-/* Constant fake hash so login spends identical bcrypt time for unknown
-   emails (timing-attack guard). Computed once at startup; not a secret. */
 const FAKE_HASH = bcrypt.hashSync('iqprec-timing-guard-string', BCRYPT_ROUNDS);
 
 /* ------------------------------------------------------------
@@ -82,11 +69,7 @@ const passwordSchema = z
   .regex(/[0-9]/, 'Password must include a number')
   .regex(/[^A-Za-z0-9]/, 'Password must include a special character');
 
-const emailSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .email('A valid email is required');
+const emailSchema = z.string().trim().toLowerCase().email('A valid email is required');
 
 const registerSchema = z.object({
   email: emailSchema,
@@ -116,8 +99,6 @@ function dbUnavailable(res) {
   });
 }
 
-/* Generic credential failure — identical for unknown email and wrong
-   password (no enumeration). Bilingual message per CLAUDE.md. */
 function genericAuthFail(res) {
   return res.status(401).json({
     success: false,
@@ -131,10 +112,10 @@ function genericAuthFail(res) {
 function setRefreshCookie(res, token) {
   res.cookie(REFRESH_COOKIE, token, {
     httpOnly: true,
-    secure: isProduction, // Secure in prod; relaxed over http in dev
+    secure: isProduction,
     sameSite: 'strict',
     maxAge: REFRESH_MAX_AGE_MS,
-    path: '/api/v1/auth', // scoped to refresh/logout only
+    path: '/api/v1/auth',
   });
 }
 
@@ -148,17 +129,10 @@ function clearRefreshCookie(res) {
   });
 }
 
-/* Issue an access token + a fresh refresh token (stored hashed), and set
-   the refresh cookie. Returns the access token for the response body. */
 async function issueSession(user, req, res) {
-  const accessToken = generateAccessToken(user.id, user.email, user.plan);
+  const accessToken = generateAccessToken(user.id, user.email, user.plan, user.subscription_status);
   const refreshToken = generateRefreshToken();
-  await storeRefreshToken(
-    user.id,
-    refreshToken,
-    req.ip,
-    req.headers['user-agent']
-  );
+  await storeRefreshToken(user.id, refreshToken, req.ip, req.headers['user-agent']);
   setRefreshCookie(res, refreshToken);
   return accessToken;
 }
@@ -170,8 +144,6 @@ router.post('/register', validateBody(registerSchema), async (req, res, next) =>
   if (!hasDb()) return dbUnavailable(res);
   const { email, password, fullName, language, referralCode } = req.body;
 
-  // Identical happy-path body — returned whether or not the email exists,
-  // so an attacker cannot enumerate registered accounts.
   const accepted = {
     success: true,
     data: null,
@@ -180,29 +152,17 @@ router.post('/register', validateBody(registerSchema), async (req, res, next) =>
   };
 
   try {
-    // Always hash (uniform timing) even if the email already exists.
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    const { data: existing } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
+    const existing = await queryOne('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing) return res.status(201).json(accepted);
 
-    if (existing) {
-      // Do NOT reveal existence. (A "you already have an account" email
-      // could be sent here in future — still no API signal.)
-      return res.status(201).json(accepted);
-    }
-
-    // Resolve referrer (if a code was supplied and matches).
     let referredBy = null;
     if (referralCode) {
-      const { data: referrer } = await supabase
-        .from('users')
-        .select('id')
-        .eq('referral_code', referralCode)
-        .maybeSingle();
+      const referrer = await queryOne(
+        'SELECT id FROM users WHERE referral_code = $1',
+        [referralCode]
+      );
       if (referrer) referredBy = referrer.id;
     }
 
@@ -211,31 +171,28 @@ router.post('/register', validateBody(registerSchema), async (req, res, next) =>
     const verifyHash = hashToken(verifyRaw);
     const now = Date.now();
 
-    const { data: created, error: insertErr } = await supabase
-      .from('users')
-      .insert({
-        email,
-        password_hash: passwordHash,
-        full_name: fullName,
-        language,
-        subscription_status: 'trial',
-        trial_ends_at: new Date(now + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString(),
-        referral_code: referralCodeNew,
-        referred_by: referredBy,
-        email_verified: false,
-        email_verify_token: verifyHash,
-        email_verify_expires: new Date(now + VERIFY_TTL_MS).toISOString(),
-      })
-      .select('id')
-      .single();
-
-    if (insertErr) {
-      // 23505 = unique_violation (email race) → stay generic, no leak.
+    let created;
+    try {
+      const rows = await returning(
+        `INSERT INTO users
+           (email, password_hash, full_name, language, subscription_status,
+            trial_ends_at, referral_code, referred_by, email_verified,
+            email_verify_token, email_verify_expires)
+         VALUES ($1, $2, $3, $4, 'pending_trial', NULL, $5, $6, false, $7, $8)
+         RETURNING id`,
+        [
+          email, passwordHash, fullName, language,
+          referralCodeNew, referredBy,
+          verifyHash,
+          new Date(now + VERIFY_TTL_MS).toISOString(),
+        ]
+      );
+      created = rows[0];
+    } catch (insertErr) {
       if (insertErr.code === '23505') return res.status(201).json(accepted);
       return next(insertErr);
     }
 
-    // Non-blocking side effects (do NOT await — never delay the response).
     if (referredBy) {
       recordReferral(referredBy, created.id).catch((e) =>
         console.error('[register] recordReferral failed:', e?.message)
@@ -243,8 +200,6 @@ router.post('/register', validateBody(registerSchema), async (req, res, next) =>
     }
     sendVerificationEmail(email, fullName, verifyRaw, language).catch(() => {});
 
-    // Development convenience: surface the raw verification token so it can
-    // be clicked manually without a real email. NEVER in production.
     if (isDevelopment) {
       return res.status(201).json({ ...accepted, devVerifyToken: verifyRaw });
     }
@@ -264,12 +219,11 @@ router.post('/verify-email', validateBody(verifyEmailSchema), async (req, res, n
   try {
     const tokenHash = hashToken(req.body.token);
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email_verify_token', tokenHash)
-      .gt('email_verify_expires', new Date().toISOString())
-      .maybeSingle();
+    const user = await queryOne(
+      `SELECT * FROM users
+       WHERE email_verify_token = $1 AND email_verify_expires > $2`,
+      [tokenHash, new Date().toISOString()]
+    );
 
     if (!user) {
       return res.status(400).json({
@@ -280,19 +234,16 @@ router.post('/verify-email', validateBody(verifyEmailSchema), async (req, res, n
       });
     }
 
-    await supabase
-      .from('users')
-      .update({
-        email_verified: true,
-        email_verify_token: null,
-        email_verify_expires: null,
-        last_active_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
+    await execute(
+      `UPDATE users
+       SET email_verified = true, email_verify_token = NULL,
+           email_verify_expires = NULL, last_active_at = NOW()
+       WHERE id = $1`,
+      [user.id]
+    );
 
     const accessToken = await issueSession(user, req, res);
 
-    // Activation side effects — fire-and-forget.
     sendWelcomeEmail(user.email, user.full_name, user.language).catch(() => {});
     updateMilestoneTracker().catch((e) =>
       console.error('[verify-email] milestone update failed:', e?.message)
@@ -320,19 +271,13 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    const { data: user } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .maybeSingle();
+    const user = await queryOne('SELECT * FROM users WHERE email = $1', [email]);
 
-    // Unknown email: spend identical bcrypt time, then generic failure.
     if (!user) {
       await bcrypt.compare(password, FAKE_HASH);
       return genericAuthFail(res);
     }
 
-    // Locked account → 429 with remaining time.
     if (user.locked_until && new Date(user.locked_until).getTime() > Date.now()) {
       const retryAfter = Math.ceil(
         (new Date(user.locked_until).getTime() - Date.now()) / 1000
@@ -351,13 +296,18 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
 
     if (!ok) {
       const attempts = (user.failed_login_attempts || 0) + 1;
-      const update = { failed_login_attempts: attempts };
+      const setClauses = ['failed_login_attempts = $1'];
+      const vals = [attempts];
       if (attempts >= MAX_FAILED_ATTEMPTS) {
-        update.locked_until = new Date(Date.now() + LOCK_MS).toISOString();
+        setClauses.push(`locked_until = $${vals.length + 1}`);
+        vals.push(new Date(Date.now() + LOCK_MS).toISOString());
       }
-      await supabase.from('users').update(update).eq('id', user.id);
+      vals.push(user.id);
+      await execute(
+        `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${vals.length}`,
+        vals
+      );
 
-      // Exactly at the 5th failure: alert the owner (async).
       if (attempts === MAX_FAILED_ATTEMPTS) {
         sendSecurityAlertEmail(user.email, user.full_name, req.ip, user.language).catch(
           () => {}
@@ -366,7 +316,6 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
       return genericAuthFail(res);
     }
 
-    // Password correct but email not verified → distinct, expected error.
     if (!user.email_verified) {
       return res.status(401).json({
         success: false,
@@ -376,15 +325,12 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
       });
     }
 
-    // Success: reset counters, stamp activity, issue tokens.
-    await supabase
-      .from('users')
-      .update({
-        failed_login_attempts: 0,
-        locked_until: null,
-        last_active_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
+    await execute(
+      `UPDATE users
+       SET failed_login_attempts = 0, locked_until = NULL, last_active_at = NOW()
+       WHERE id = $1`,
+      [user.id]
+    );
 
     const accessToken = await issueSession(user, req, res);
 
@@ -400,7 +346,7 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
 });
 
 /* ============================================================
-   POST /refresh — refresh token from httpOnly cookie ONLY.
+   POST /refresh
    ============================================================ */
 router.post('/refresh', async (req, res) => {
   const raw = req.cookies?.[REFRESH_COOKIE];
@@ -427,7 +373,6 @@ router.post('/refresh', async (req, res) => {
       message: null,
     });
   } catch {
-    // Any failure (invalid / expired / reuse) → clear cookie + 401.
     clearRefreshCookie(res);
     return res.status(401).json({
       success: false,
@@ -439,19 +384,18 @@ router.post('/refresh', async (req, res) => {
 });
 
 /* ============================================================
-   POST /logout — always 200.
+   POST /logout
    ============================================================ */
 router.post('/logout', async (req, res) => {
   const raw = req.cookies?.[REFRESH_COOKIE];
 
   try {
     if (raw && hasDb()) {
-      await supabase
-        .from('refresh_tokens')
-        .update({ revoked: true })
-        .eq('token_hash', hashToken(raw));
+      await execute(
+        `UPDATE refresh_tokens SET revoked = true WHERE token_hash = $1`,
+        [hashToken(raw)]
+      ).catch(() => {});
     }
-    // Best-effort: blacklist the presented access token too.
     const auth = req.headers.authorization || '';
     if (auth.startsWith('Bearer ')) {
       await blacklistAccessToken(auth.slice(7)).catch(() => {});
@@ -461,16 +405,11 @@ router.post('/logout', async (req, res) => {
   }
 
   clearRefreshCookie(res);
-  return res.json({
-    success: true,
-    data: null,
-    error: null,
-    message: 'Logged out.',
-  });
+  return res.json({ success: true, data: null, error: null, message: 'Logged out.' });
 });
 
 /* ============================================================
-   POST /forgot-password — always generic success (no enumeration).
+   POST /forgot-password
    ============================================================ */
 router.post('/forgot-password', validateBody(forgotSchema), async (req, res, next) => {
   if (!hasDb()) return dbUnavailable(res);
@@ -484,7 +423,6 @@ router.post('/forgot-password', validateBody(forgotSchema), async (req, res, nex
   };
 
   try {
-    // Strict limit: 3 per hour per email (Redis; fail open if unavailable).
     if (isRedisReady()) {
       const key = `rl:forgot:${email}`;
       const count = await redis.incr(key);
@@ -501,29 +439,27 @@ router.post('/forgot-password', validateBody(forgotSchema), async (req, res, nex
       }
     }
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('id, email, full_name, language')
-      .eq('email', email)
-      .maybeSingle();
+    const user = await queryOne(
+      'SELECT id, email, full_name, language FROM users WHERE email = $1',
+      [email]
+    );
 
     if (user) {
-      const resetRaw = generateEmailVerifyToken(); // 32 bytes hex
-      await supabase
-        .from('users')
-        .update({
-          reset_token: hashToken(resetRaw),
-          reset_token_expires: new Date(Date.now() + RESET_TTL_MS).toISOString(),
-        })
-        .eq('id', user.id);
-
+      const resetRaw = generateEmailVerifyToken();
+      await execute(
+        `UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3`,
+        [
+          hashToken(resetRaw),
+          new Date(Date.now() + RESET_TTL_MS).toISOString(),
+          user.id,
+        ]
+      );
       sendPasswordResetEmail(user.email, user.full_name, resetRaw, user.language).catch(
         () => {}
       );
       return res.json(generic);
     }
 
-    // No such account: fixed 100ms delay to flatten timing, same response.
     await new Promise((r) => setTimeout(r, 100));
     return res.json(generic);
   } catch (err) {
@@ -541,12 +477,10 @@ router.post('/reset-password', validateBody(resetSchema), async (req, res, next)
   try {
     const tokenHash = hashToken(token);
 
-    const { data: user } = await supabase
-      .from('users')
-      .select('id')
-      .eq('reset_token', tokenHash)
-      .gt('reset_token_expires', new Date().toISOString())
-      .maybeSingle();
+    const user = await queryOne(
+      `SELECT id FROM users WHERE reset_token = $1 AND reset_token_expires > $2`,
+      [tokenHash, new Date().toISOString()]
+    );
 
     if (!user) {
       return res.status(400).json({
@@ -559,18 +493,14 @@ router.post('/reset-password', validateBody(resetSchema), async (req, res, next)
 
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
-    await supabase
-      .from('users')
-      .update({
-        password_hash: passwordHash,
-        reset_token: null,
-        reset_token_expires: null,
-        failed_login_attempts: 0,
-        locked_until: null,
-      })
-      .eq('id', user.id);
+    await execute(
+      `UPDATE users
+       SET password_hash = $1, reset_token = NULL, reset_token_expires = NULL,
+           failed_login_attempts = 0, locked_until = NULL
+       WHERE id = $2`,
+      [passwordHash, user.id]
+    );
 
-    // Invalidate every existing session — reset = global sign-out.
     await revokeAllUserTokens(user.id);
 
     return res.json({
@@ -585,19 +515,18 @@ router.post('/reset-password', validateBody(resetSchema), async (req, res, next)
 });
 
 /* ============================================================
-   GET /me — requires verifyToken + checkSubscription
+   GET /me
    ============================================================ */
 router.get('/me', verifyToken, checkSubscription, async (req, res, next) => {
   if (!hasDb()) return dbUnavailable(res);
 
   try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', req.user.userId)
-      .single();
+    const user = await queryOne(
+      'SELECT * FROM users WHERE id = $1',
+      [req.user.userId]
+    );
 
-    if (error || !user) {
+    if (!user) {
       return res.status(401).json({
         success: false,
         data: null,

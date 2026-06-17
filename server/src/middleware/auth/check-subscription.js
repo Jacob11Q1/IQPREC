@@ -1,13 +1,10 @@
 /* ============================================================
    IQPREC — middleware/auth/check-subscription.js
    Gate for /api/v1/app/* (runs AFTER verifyToken).
-     • ALLOW if subscription_status = 'active'.
-     • ALLOW if 'trial' AND trial_ends_at is in the future.
-     • BLOCK 402 TRIAL_EXPIRED otherwise, with a warm upgrade payload.
-   Pricing per CLAUDE.md: monthly $15, season $110.
    ============================================================ */
 
-import { supabase } from '../../db/client.js';
+import { hasDb } from '../../db/client.js';
+import { queryOne } from '../../db/query.js';
 
 const MONTHLY_PRICE = 15;
 const SEASON_PRICE = 110;
@@ -23,8 +20,7 @@ export async function checkSubscription(req, res, next) {
     });
   }
 
-  // If the DB isn't wired yet (dev), don't hard-fail protected routes.
-  if (!supabase) {
+  if (!hasDb()) {
     return res.status(503).json({
       success: false,
       data: null,
@@ -33,13 +29,12 @@ export async function checkSubscription(req, res, next) {
     });
   }
 
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('subscription_status, trial_ends_at')
-    .eq('id', userId)
-    .single();
+  const user = await queryOne(
+    'SELECT subscription_status, trial_ends_at FROM users WHERE id = $1',
+    [userId]
+  ).catch(() => null);
 
-  if (error || !user) {
+  if (!user) {
     return res.status(401).json({
       success: false,
       data: null,
@@ -48,18 +43,33 @@ export async function checkSubscription(req, res, next) {
     });
   }
 
-  const isActive = user.subscription_status === 'active';
+  const status = user.subscription_status;
+  const isActive      = status === 'active';
+  const isTrialing    = status === 'trialing';
+  const isPendingTrial = status === 'pending_trial'; // bypass: no card required yet
   const trialLive =
-    user.subscription_status === 'trial' &&
+    status === 'trial' &&
     user.trial_ends_at &&
     new Date(user.trial_ends_at).getTime() > Date.now();
 
-  if (isActive || trialLive) {
+  if (isActive || isTrialing || isPendingTrial || trialLive) {
     req.subscription = {
-      status: user.subscription_status,
+      status,
       trialEndsAt: user.trial_ends_at,
     };
     return next();
+  }
+
+  if (status === 'pending_trial') {
+    return res.status(402).json({
+      success: false,
+      data: null,
+      error: 'CARD_REQUIRED',
+      message: 'Add your card to activate your 7-day free trial.',
+      setupUrl: '/start-trial',
+      monthlyPrice: MONTHLY_PRICE,
+      seasonPrice: SEASON_PRICE,
+    });
   }
 
   return res.status(402).json({

@@ -1,9 +1,121 @@
 /* ============================================================
    IQPREC — chips.css
-   Page-specific styles for chips.html. Tokens come from
-   design-system.css; keep this file scoped to this page only.
+   Page-specific styles. Shared page-head / gw-badge /
+   btn-generate / ai-analysis live in components.css.
    ============================================================ */
 
-[data-page="chips"] .content-body {
-  /* page-specific layout goes here */
+/* ---------------- Chip selector ---------------- */
+.chips-selector { padding: 0; }
+
+.chips-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 16px;
+}
+
+/* ---------------- Individual chip toggle ---------------- */
+.chip-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 12px;
+  border-radius: var(--r-md);
+  border: 2px solid var(--border-dark);
+  background: var(--navy-elevated);
+  cursor: pointer;
+  transition: border-color var(--t-base), background var(--t-base), opacity var(--t-base);
+  text-align: center;
+}
+
+.chip-toggle--on {
+  border-color: var(--green);
+  background: rgba(0, 217, 126, 0.08);
+}
+
+.chip-toggle--off {
+  border-color: var(--border-dark);
+  background: var(--navy-card);
+  opacity: 0.55;
+}
+
+.chip-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.chip-toggle-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.chip-toggle-state {
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--green);
+}
+
+.chip-toggle--off .chip-toggle-state { color: var(--muted); }
+
+/* ---------------- Chip results ---------------- */
+.chip-verdicts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-block-end: 20px;
+}
+
+.chip-verdict-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--navy-elevated);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-dark);
+}
+
+.chip-verdict-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.chip-verdict-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--white);
+}
+
+/* ---------------- Verdict badges ---------------- */
+.verdict-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  border-radius: var(--r-sm);
+  padding: 3px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.verdict-play   { background: var(--green); color: var(--text-dark); }
+.verdict-hold   { background: var(--gold);  color: var(--text-dark); }
+.verdict-notyet {
+  background: var(--navy-elevated);
+  border: 1px solid var(--border-dark);
+  color: var(--muted);
+}
+
+.chip-result-skeleton {
+  padding: 14px 0;
+  border-block-end: 1px solid var(--border-dark);
+}
+
+.chip-result-skeleton:last-child { border: none; }
+
+@media (min-width: 640px) {
+  .chips-toggle-grid { grid-template-columns: repeat(4, 1fr); }
 }

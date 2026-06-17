@@ -11,7 +11,8 @@ import crypto from 'node:crypto';
 import { Resend } from 'resend';
 
 import { env } from '../config/env.js';
-import { supabase, hasDb } from '../db/client.js';
+import { hasDb } from '../db/client.js';
+import { execute } from '../db/query.js';
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 const FROM = env.RESEND_FROM || 'IQPREC <receipts@iqprec.com>';
@@ -126,17 +127,12 @@ export async function sendReceiptEmail({
 
   // 1) Persist the receipt record (best-effort).
   if (hasDb()) {
-    const { error } = await supabase.from('receipts').insert({
-      user_id: userId,
-      receipt_number: receiptNumber,
-      amount,
-      currency,
-      plan,
-      billing_cycle: billingCycle,
-      payment_provider: 'stripe',
-      paid_at: paidAt.toISOString(),
-    });
-    if (error) console.error('[receipt] insert failed:', error.message);
+    await execute(
+      `INSERT INTO receipts
+         (user_id, receipt_number, amount, currency, plan, billing_cycle, payment_provider, paid_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'stripe', $7)`,
+      [userId, receiptNumber, amount, currency, plan, billingCycle, paidAt.toISOString()]
+    ).catch((err) => console.error('[receipt] insert failed:', err.message));
   }
 
   // 2) Build + send the branded invoice email.

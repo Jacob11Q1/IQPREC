@@ -9,6 +9,7 @@
    ============================================================ */
 
 import { t, applyTranslations, setLanguage } from './i18n.js';
+import { api } from './api.js';
 
 const ONB_KEY = 'iqprec_onboarding';
 const TOTAL_STEPS = 3;
@@ -67,9 +68,10 @@ function saveOnboarding(data) {
   // authenticated profile endpoint on a later day. Stored locally for now.
 }
 
-function confirmFplTeam() {
+async function confirmFplTeam() {
   const input = $('fpl-id');
   const err = $('fpl-error');
+  const btn = document.querySelector('[data-role="fpl-confirm"]');
   const value = (input?.value || '').trim();
 
   if (!/^\d{1,9}$/.test(value)) {
@@ -83,6 +85,16 @@ function confirmFplTeam() {
 
   if (err) err.hidden = true;
   input?.classList.remove('input-error');
+
+  if (btn) btn.disabled = true;
+  try {
+    await api.put('/app/profile', { fplTeamId: Number(value) });
+  } catch {
+    /* non-fatal — still advance; team ID saved locally as fallback */
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+
   saveOnboarding({ fplTeamId: Number(value) });
   goToStep(3);
 }

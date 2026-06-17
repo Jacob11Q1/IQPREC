@@ -5,9 +5,9 @@
    for availability, never take the API down).
 
    Tiers (CLAUDE.md L3) — PRODUCTION:
-     • auth   — 5 requests / 15 min  per IP
+     • auth   — 20 requests / 15 min  per IP
      • ai     — 10 requests / 60 sec per authenticated user
-     • global — 100 requests / 60 sec per IP
+     • global — 200 requests / 60 sec per IP
 
    In DEVELOPMENT the limits are relaxed so localhost testing isn't
    blocked, and any stale limit keys are flushed on startup:
@@ -156,9 +156,9 @@ const LIMITS = isDevelopment
       global: 1000, // 1000 / 60 sec per IP
     }
   : {
-      auth: 5, // 5 / 15 min per IP
-      ai: 10, // 10 / 60 sec per user
-      global: 100, // 100 / 60 sec per IP
+      auth: 20, // 20 / 15 min per IP
+      ai: 10,   // 10 / 60 sec per user
+      global: 200, // 200 / 60 sec per IP
     };
 
 /* ------------------------------------------------------------

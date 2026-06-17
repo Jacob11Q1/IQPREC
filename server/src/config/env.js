@@ -25,9 +25,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   FRONTEND_URL: z.string().url(),
 
-  // ---- Supabase ----
-  SUPABASE_URL: z.string().url(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  // ---- PostgreSQL ----
+  DATABASE_URL: z.string().min(1),
 
   // ---- JWT (RS256 — Pentagon L2) ----
   JWT_PRIVATE_KEY: z.string().min(1),
@@ -46,12 +45,22 @@ const envSchema = z.object({
   STRIPE_PRICE_MONTHLY: z.string().min(1),
   STRIPE_PRICE_SEASON: z.string().min(1),
 
-  // ---- Resend (email) ----
-  RESEND_API_KEY: z.string().min(1),
-  RESEND_FROM: z.string().min(1),
+  // ---- Gmail SMTP (email) ----
+  GMAIL_USER: z.string().min(1).default('will_add_later'),
+  GMAIL_APP_PASSWORD: z.string().min(1).default('will_add_later'),
 
   // ---- Telegram bot ----
   TELEGRAM_BOT_TOKEN: z.string().min(1),
+
+  // ---- OAuth social login ----
+  GOOGLE_CLIENT_ID:     z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
+  FACEBOOK_APP_ID:      z.string().default(''),
+  FACEBOOK_APP_SECRET:  z.string().default(''),
+  APPLE_CLIENT_ID:      z.string().default(''),  // Service ID e.g. com.iqprec.web
+  APPLE_TEAM_ID:        z.string().default(''),
+  APPLE_KEY_ID:         z.string().default(''),
+  APPLE_PRIVATE_KEY:    z.string().default(''),  // contents of .p8 file
 
   // ---- Admin ----
   ADMIN_EMAIL: z.string().email(),
@@ -81,7 +90,6 @@ if (!result.success) {
         issues +
         '\n  → Copy server/.env.example to server/.env and fill values.\n'
     );
-    // Best-effort partial parse so dev can still serve static files.
     parsed = envSchema.partial().parse(process.env);
   }
 } else {

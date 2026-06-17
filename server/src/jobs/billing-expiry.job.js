@@ -2,16 +2,14 @@
    IQPREC — jobs/billing-expiry.job.js
    Daily at 00:00 UTC: find season-pass users whose plan_expires_at has
    passed, move them to 'expired', and send a warm renewal email.
-   (Monthly subscribers are handled by Stripe's recurring billing +
-   webhooks, not here.)
    ============================================================ */
 
 import cron from 'node-cron';
 
-import { supabase, hasDb } from '../db/client.js';
+import { hasDb } from '../db/client.js';
+import { queryMany, execute } from '../db/query.js';
 import { sendSeasonRenewalEmail } from '../services/receipt.service.js';
 
-/** Expire season passes whose plan_expires_at is in the past. */
 export async function expireSeasonPasses() {
   if (!hasDb()) {
     console.warn('[billing-expiry] DB not configured — skipping.');
@@ -20,35 +18,28 @@ export async function expireSeasonPasses() {
 
   const nowIso = new Date().toISOString();
 
-  // Find active season-pass users past their expiry.
-  const { data: expiredUsers, error } = await supabase
-    .from('users')
-    .select('id, email, full_name, language')
-    .eq('plan', 'season')
-    .eq('subscription_status', 'active')
-    .lt('plan_expires_at', nowIso);
+  const expiredUsers = await queryMany(
+    `SELECT id, email, full_name, language
+     FROM users
+     WHERE plan = 'season' AND subscription_status = 'active' AND plan_expires_at < $1`,
+    [nowIso]
+  ).catch((err) => {
+    console.error('[billing-expiry] query failed:', err.message);
+    return [];
+  });
 
-  if (error) {
-    console.error('[billing-expiry] query failed:', error.message);
-    return { expired: 0 };
-  }
-
-  const users = expiredUsers || [];
-  if (!users.length) {
+  if (!expiredUsers.length) {
     console.log('[billing-expiry] no season passes to expire.');
     return { expired: 0 };
   }
 
-  // Flip them to 'expired'. (Schema constraint allows trial/active/expired;
-  // we use 'expired' rather than the spec's 'trial_expired' to satisfy it.)
-  const ids = users.map((u) => u.id);
-  await supabase
-    .from('users')
-    .update({ subscription_status: 'expired' })
-    .in('id', ids);
+  const ids = expiredUsers.map((u) => u.id);
+  await execute(
+    `UPDATE users SET subscription_status = 'expired' WHERE id = ANY($1::uuid[])`,
+    [ids]
+  );
 
-  // Warm renewal email to each (best-effort, non-blocking failures).
-  for (const u of users) {
+  for (const u of expiredUsers) {
     if (!u.email) continue;
     try {
       await sendSeasonRenewalEmail({
@@ -61,11 +52,10 @@ export async function expireSeasonPasses() {
     }
   }
 
-  console.log(`[billing-expiry] expired ${users.length} season pass(es).`);
-  return { expired: users.length };
+  console.log(`[billing-expiry] expired ${expiredUsers.length} season pass(es).`);
+  return { expired: expiredUsers.length };
 }
 
-/** Register the daily expiry cron (00:00 UTC). */
 export function initBillingJobs() {
   cron.schedule('0 0 * * *', () => {
     expireSeasonPasses();

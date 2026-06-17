@@ -181,15 +181,140 @@ async function loadLeaderboard() {
 }
 
 /* ------------------------------------------------------------
+   CSP-safe image fallback wiring
+   ------------------------------------------------------------ */
+function wireImgFallbacks(root) {
+  root.querySelectorAll('img.player-img').forEach((img) => {
+    img.addEventListener('error', () => {
+      img.hidden = true;
+      const fb = img.nextElementSibling;
+      if (fb && fb.classList.contains('player-img-fallback')) fb.hidden = false;
+    });
+  });
+}
+
+/* ------------------------------------------------------------
+   Arab Stars showcase — hero strips + landing section
+   ------------------------------------------------------------ */
+function photoUrl(photo) {
+  if (!photo) return null;
+  const id = String(photo).replace('.jpg', '').replace('.png', '');
+  return `https://resources.premierleague.com/premierleague/photos/players/110x140/p${id}.png`;
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+async function loadArabStars() {
+  const scrollEl = document.getElementById('arab-stars-scroll');
+  const heroPlayers = document.getElementById('hero-players');
+
+  try {
+    const res = await api.get('/fpl/arab-stars');
+    if (!res.success || !Array.isArray(res.data)) return;
+
+    const stars = res.data.slice(0, 12);
+    if (!stars.length) return;
+
+    /* Hero chips (top 4) */
+    if (heroPlayers) {
+      const top = stars.slice(0, 4);
+      heroPlayers.innerHTML = top.map((p) => {
+        const url = photoUrl(p.photo);
+        const init2 = esc(String(p.web_name).slice(0, 2).toUpperCase());
+        const imgHtml = url
+          ? `<img src="${esc(url)}" alt="${esc(p.web_name)}" loading="lazy" class="player-img">
+             <span class="hero-chip-fallback player-img-fallback" hidden>${init2}</span>`
+          : `<span class="hero-chip-fallback">${init2}</span>`;
+        return `
+          <div class="hero-player-chip">
+            ${imgHtml}
+            <span>${esc(p.web_name)}</span>
+            <span class="chip-pts">${formatNumber(p.total_points ?? 0)} pts</span>
+          </div>`;
+      }).join('');
+      wireImgFallbacks(heroPlayers);
+    }
+
+    /* Full scroll strip */
+    if (scrollEl) {
+      scrollEl.innerHTML = stars.map((p) => {
+        const url = photoUrl(p.photo);
+        const imgHtml = url
+          ? `<img class="arab-star-photo player-img" src="${esc(url)}" alt="${esc(p.web_name)}" loading="lazy">
+             <div class="arab-star-photo-fallback player-img-fallback" hidden>${esc(String(p.web_name).slice(0, 2).toUpperCase())}</div>`
+          : `<div class="arab-star-photo-fallback">${esc(String(p.web_name).slice(0, 2).toUpperCase())}</div>`;
+        return `
+          <div class="arab-star-card">
+            ${imgHtml}
+            <div class="arab-star-name">${esc(p.web_name)}</div>
+            <div class="arab-star-team">${esc(p.team_name || '')}</div>
+            <div class="arab-star-stats">
+              <div class="arab-star-stat">
+                <div class="arab-star-stat-val">${formatNumber(p.total_points ?? 0)}</div>
+                <div class="arab-star-stat-lbl">Pts</div>
+              </div>
+              <div class="arab-star-stat">
+                <div class="arab-star-stat-val">${p.form ?? '0.0'}</div>
+                <div class="arab-star-stat-lbl">Form</div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+      wireImgFallbacks(scrollEl);
+    }
+  } catch { /* non-fatal */ }
+}
+
+/* ------------------------------------------------------------
+   Nav scroll detection
+   ------------------------------------------------------------ */
+function wireNavScroll() {
+  const nav = document.querySelector('.landing-nav');
+  if (!nav) return;
+  const toggle = () => nav.classList.toggle('is-scrolled', window.scrollY > 40);
+  toggle();
+  window.addEventListener('scroll', toggle, { passive: true });
+}
+
+/* ------------------------------------------------------------
+   Section entrance animations (.fade-up)
+   ------------------------------------------------------------ */
+function observeFadeUp() {
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    document.querySelectorAll('.fade-up, .fade-in').forEach((el) => el.classList.add('visible'));
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+  );
+  document.querySelectorAll('.fade-up, .fade-in').forEach((el) => io.observe(el));
+}
+
+/* ------------------------------------------------------------
    Init
    ------------------------------------------------------------ */
 function init() {
   injectHeroLogo();
+  wireNavScroll();
   observeSocialProof();
   observeFeatures();
+  observeFadeUp();
   wireJoinCode();
   loadStats();
   loadLeaderboard();
+  loadArabStars();
 }
 
 document.addEventListener('DOMContentLoaded', init);

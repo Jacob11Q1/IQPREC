@@ -71,6 +71,20 @@
   --t-fast: 120ms ease;
   --t-base: 200ms ease;
   --t-slow: 320ms ease;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- Gradients ---- */
+  --gradient-green: linear-gradient(135deg, var(--green-dark), var(--green));
+  --gradient-gold: linear-gradient(135deg, #c07e10, var(--gold));
+  --gradient-blue: linear-gradient(135deg, #1a5fa8, var(--blue));
+
+  /* ---- Glows ---- */
+  --glow-green: 0 0 24px rgba(0, 217, 126, 0.28);
+  --glow-gold: 0 0 24px rgba(245, 166, 35, 0.28);
+  --glow-blue: 0 0 24px rgba(59, 139, 235, 0.28);
+  --shadow-green: 0 8px 32px rgba(0, 217, 126, 0.18);
+  --shadow-gold: 0 8px 32px rgba(245, 166, 35, 0.18);
 }
 
 /* ============================================================

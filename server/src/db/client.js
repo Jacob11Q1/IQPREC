@@ -1,22 +1,34 @@
-import { createClient } from '@supabase/supabase-js';
-import ws from 'ws';
+/* ============================================================
+   IQPREC — db/client.js
+   PostgreSQL connection pool (node-postgres / pg).
+   Single Pool instance shared across all services.
+   ============================================================ */
+
+import pg from 'pg';
 import { env } from '../config/env.js';
 
-let supabase = null;
+const { Pool } = pg;
 
-if (env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
-  supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    realtime: { transport: ws },
-    global: { headers: { 'x-application-name': 'iqprec-server' } },
+let pool = null;
+
+if (env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: env.DATABASE_URL,
+    max: 10,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000,
+  });
+
+  pool.on('error', (err) => {
+    console.error('[db] unexpected pool error:', err.message);
   });
 } else {
-  console.warn('[db] Supabase not configured — DB features disabled.');
+  console.warn('[db] DATABASE_URL not configured — DB features disabled.');
 }
 
 export function hasDb() {
-  return supabase !== null;
+  return pool !== null;
 }
 
-export { supabase };
-export default supabase;
+export { pool };
+export default pool;

@@ -13,7 +13,8 @@ import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 
 import { env } from '../config/env.js';
-import { supabase } from '../db/client.js';
+import { pool, hasDb } from '../db/client.js';
+import { queryOne, execute } from '../db/query.js';
 import { redis, isRedisReady } from '../lib/redis.js';
 
 const ACCESS_TTL = '15m';
@@ -23,7 +24,6 @@ const ISSUER = 'iqprec.com';
 const AUDIENCE = 'iqprec-app';
 const BLACKLIST_PREFIX = 'bl:jwt:';
 
-/* PEM keys may be stored with literal "\n" — restore real newlines. */
 function privateKey() {
   return String(env.JWT_PRIVATE_KEY || '').replace(/\\n/g, '\n');
 }
@@ -36,7 +36,7 @@ function sha256(raw) {
 }
 
 function requireDb() {
-  if (!supabase) {
+  if (!hasDb()) {
     const err = new Error('Database not configured');
     err.code = 'DB_UNAVAILABLE';
     err.status = 503;
@@ -47,8 +47,8 @@ function requireDb() {
 /* ------------------------------------------------------------
    Access tokens
    ------------------------------------------------------------ */
-export function generateAccessToken(userId, email, plan) {
-  return jwt.sign({ userId, email, plan }, privateKey(), {
+export function generateAccessToken(userId, email, plan, subscriptionStatus) {
+  return jwt.sign({ userId, email, plan, subscriptionStatus }, privateKey(), {
     algorithm: 'RS256',
     expiresIn: ACCESS_TTL,
     issuer: ISSUER,
@@ -57,11 +57,6 @@ export function generateAccessToken(userId, email, plan) {
   });
 }
 
-/**
- * Verify an access token: RS256 signature + iss/aud, then Redis
- * blacklist check. Throws with err.code = AUTH_1004 when blacklisted;
- * jwt errors (TokenExpiredError / JsonWebTokenError) propagate as-is.
- */
 export async function verifyAccessToken(token) {
   const payload = jwt.verify(token, publicKey(), {
     algorithms: ['RS256'],
@@ -79,14 +74,12 @@ export async function verifyAccessToken(token) {
       }
     } catch (err) {
       if (err.code === 'AUTH_1004') throw err;
-      // Redis down → fail open on the blacklist check (signature is valid).
     }
   }
 
   return payload;
 }
 
-/** Blacklist an access token until its natural expiry (logout/suspend). */
 export async function blacklistAccessToken(token) {
   if (!isRedisReady()) return false;
   let ttlSec = 15 * 60;
@@ -112,14 +105,13 @@ export function generateRefreshToken() {
 export async function storeRefreshToken(userId, rawToken, ipAddress, userAgent) {
   requireDb();
   const expiresAt = new Date(Date.now() + REFRESH_TTL_MS).toISOString();
-  const { error } = await supabase.from('refresh_tokens').insert({
-    user_id: userId,
-    token_hash: sha256(rawToken),
-    expires_at: expiresAt,
-    ip_address: ipAddress || null,
-    user_agent: userAgent || null,
-  });
-  if (error) {
+  try {
+    await execute(
+      `INSERT INTO refresh_tokens (user_id, token_hash, expires_at, ip_address, user_agent)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, sha256(rawToken), expiresAt, ipAddress || null, userAgent || null]
+    );
+  } catch (err) {
     const e = new Error('Failed to persist refresh token');
     e.code = 'TOKEN_STORE_FAILED';
     e.status = 500;
@@ -128,23 +120,16 @@ export async function storeRefreshToken(userId, rawToken, ipAddress, userAgent) 
   return { expiresAt };
 }
 
-/**
- * Rotate: validate the presented refresh token, revoke it, issue a
- * fresh access + refresh pair. Reuse of an already-revoked token is
- * treated as theft → revoke every token for that user.
- * Returns { accessToken, refreshToken, userId }.
- */
 export async function rotateRefreshToken(rawToken, ipAddress, userAgent) {
   requireDb();
   const tokenHash = sha256(rawToken);
 
-  const { data: row, error } = await supabase
-    .from('refresh_tokens')
-    .select('id, user_id, expires_at, revoked')
-    .eq('token_hash', tokenHash)
-    .maybeSingle();
+  const row = await queryOne(
+    `SELECT id, user_id, expires_at, revoked FROM refresh_tokens WHERE token_hash = $1`,
+    [tokenHash]
+  );
 
-  if (error || !row) {
+  if (!row) {
     const e = new Error('Invalid refresh token');
     e.code = 'AUTH_1005';
     e.status = 401;
@@ -167,39 +152,35 @@ export async function rotateRefreshToken(rawToken, ipAddress, userAgent) {
     throw e;
   }
 
-  // Revoke the old token, mint and store the new one.
-  await supabase.from('refresh_tokens').update({ revoked: true }).eq('id', row.id);
+  await execute(`UPDATE refresh_tokens SET revoked = true WHERE id = $1`, [row.id]);
 
   const newRaw = generateRefreshToken();
   await storeRefreshToken(row.user_id, newRaw, ipAddress, userAgent);
 
-  // Need current email/plan for the access token claims.
-  const { data: user, error: userErr } = await supabase
-    .from('users')
-    .select('id, email, plan')
-    .eq('id', row.user_id)
-    .single();
+  const user = await queryOne(
+    `SELECT id, email, plan, subscription_status FROM users WHERE id = $1`,
+    [row.user_id]
+  );
 
-  if (userErr || !user) {
+  if (!user) {
     const e = new Error('User not found for refresh token');
     e.code = 'AUTH_1008';
     e.status = 401;
     throw e;
   }
 
-  const accessToken = generateAccessToken(user.id, user.email, user.plan);
+  const accessToken = generateAccessToken(user.id, user.email, user.plan, user.subscription_status);
   return { accessToken, refreshToken: newRaw, userId: user.id };
 }
 
-/** Revoke every refresh token for a user (logout-all / suspend). */
 export async function revokeAllUserTokens(userId) {
   requireDb();
-  const { error } = await supabase
-    .from('refresh_tokens')
-    .update({ revoked: true })
-    .eq('user_id', userId)
-    .eq('revoked', false);
-  if (error) {
+  try {
+    await execute(
+      `UPDATE refresh_tokens SET revoked = true WHERE user_id = $1 AND revoked = false`,
+      [userId]
+    );
+  } catch (err) {
     const e = new Error('Failed to revoke tokens');
     e.code = 'TOKEN_REVOKE_FAILED';
     e.status = 500;

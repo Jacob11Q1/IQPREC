@@ -11,9 +11,36 @@ import { applyTranslations, t, getLanguage } from './i18n.js';
 import { callAIEndpoint } from './ai.js';
 import { fetchCurrentGameweek, fetchMySquad } from './fpl.js';
 
-const state = { gameweek: null, squadIds: [], connected: false };
+const state = { gameweek: null, squadIds: [], picks: [], connected: false };
 
 function $(sel, root = document) { return root.querySelector(sel); }
+
+function photoUrl(photo) {
+  if (!photo) return null;
+  const id = String(photo).replace('.jpg', '').replace('.png', '');
+  return `https://resources.premierleague.com/premierleague/photos/players/110x140/p${id}.png`;
+}
+
+function wireImgFallbacks(root) {
+  root.querySelectorAll('img.player-img').forEach((img) => {
+    img.addEventListener('error', () => {
+      img.hidden = true;
+      const fb = img.nextElementSibling;
+      if (fb && fb.classList.contains('player-img-fallback')) fb.hidden = false;
+    });
+  });
+}
+
+/* Match a parsed AI name against the actual squad to find the photo. */
+function findPhoto(parsedName) {
+  if (!parsedName || !state.picks.length) return null;
+  const needle = parsedName.toLowerCase();
+  const match = state.picks.find((pick) => {
+    const wn = (pick.player?.web_name || '').toLowerCase();
+    return wn === needle || wn.includes(needle) || needle.includes(wn);
+  });
+  return match?.player?.photo || null;
+}
 
 /* Escape DB/AI text before innerHTML (Pentagon L6). */
 function esc(s) {
@@ -133,11 +160,23 @@ function initials(name) {
 function cardHtml(pick, i) {
   const badge = BADGES[i] || BADGES[2];
   const conf = pick.confidence;
+  const photo = findPhoto(pick.name);
+  const url = photoUrl(photo);
+  const init = esc(initials(pick.name));
+  const posRingClass = ['pos-gk', 'pos-mid', 'pos-fwd'][i] || 'pos-mid';
+
+  const photoInner = url
+    ? `<img src="${esc(url)}" alt="${esc(pick.name || '')}" loading="lazy" class="player-img">
+       <span class="player-initials player-img-fallback" hidden>${init}</span>`
+    : `<span class="player-initials">${init}</span>`;
+
   return `
     <article class="captain-pick-card ${badge.cls}">
       <span class="pick-badge" data-i18n="${badge.key}">${esc(t(badge.key))}</span>
       <div class="pick-top">
-        <span class="player-circle pos-mid is-captain jersey-${i}">${esc(initials(pick.name))}</span>
+        <div class="player-photo-ring ${posRingClass} is-captain jersey-${i}">
+          <div class="player-photo-inner">${photoInner}</div>
+        </div>
         ${conf != null ? ringHtml(conf) : ''}
       </div>
       <div class="pick-name">${esc(pick.name || '—')}</div>
@@ -173,6 +212,7 @@ function renderResult(recommendation) {
     results.hidden = false;
     results.innerHTML = picks.map((p, i) => cardHtml(p, i)).join('');
     animateRings(results);
+    wireImgFallbacks(results);
     results.dataset.topPick = picks[0]?.name || '';
   } else {
     results.hidden = true;
@@ -282,6 +322,7 @@ async function loadContext() {
     const squad = await fetchMySquad();
     if (squad.connected && squad.squad?.picks?.length) {
       state.connected = true;
+      state.picks = squad.squad.picks;
       state.squadIds = squad.squad.picks
         .map((p) => p.player?.id ?? p.element ?? p.id)
         .filter((n) => Number.isInteger(Number(n)))

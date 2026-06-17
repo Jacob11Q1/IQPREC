@@ -1,37 +1,17 @@
 /* ============================================================
    IQPREC — services/ai.service.js
    The core AI engine. Everything that talks to Claude flows through
-   here so the rules are enforced in ONE place:
-
-     • buildSystemPrompt(language)  — the master IQPREC persona + rules,
-       Arabic-first.
-     • callClaude(messages, system, opts) — Redis-guarded (10/60s/user),
-       streaming or buffered, logs every call to ai_recommendations.
-     • getCachedOrGenerate(key, ttl, fn) — DB-backed response cache
-       (ai_cache) so identical prompts cost zero tokens.
-     • buildPlayerContext(players, fixtureMap) — formats live FPL player
-       data for injection (NEVER hardcodes names — always live data).
-     • getCommunityOwnership(playerIds, gw) — the unique IQPREC Arab
-       community ownership signal, computed from user_squads.
-
-   ACTIVE PLAYERS ONLY: validatePlayers() is the caller's responsibility
-   and MUST run before any prompt is built (see routes/ai.js). This
-   service only ever formats data it is handed.
+   here so the rules are enforced in ONE place.
    ============================================================ */
 
 import Anthropic from '@anthropic-ai/sdk';
 
 import { env } from '../config/env.js';
 import { redis, isRedisReady } from '../lib/redis.js';
-import { supabase, hasDb } from '../db/client.js';
+import { hasDb } from '../db/client.js';
+import { queryOne, queryMany, execute } from '../db/query.js';
 import { getFixtures, getBootstrap, CURRENT_SEASON } from './fpl.service.js';
 
-/* ------------------------------------------------------------
-   Anthropic client (guarded). A missing key — or a `will_add…`
-   placeholder used during development — counts as "not configured",
-   so endpoints return a clean AI_5000 instead of leaking an upstream
-   401 from Anthropic. (Mirrors the email service's dev guard.)
-   ------------------------------------------------------------ */
 const hasRealKey =
   Boolean(env.ANTHROPIC_API_KEY) && !env.ANTHROPIC_API_KEY.startsWith('will_add');
 const anthropic = hasRealKey ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY }) : null;
@@ -39,11 +19,8 @@ if (!hasRealKey) {
   console.warn('[ai] ANTHROPIC_API_KEY not configured — AI endpoints return AI_5000.');
 }
 
-// Configurable via .env (L5). Defaults to the project's pinned model.
 const MODEL = env.ANTHROPIC_MODEL || 'claude-opus-4-8';
 
-// Per-user AI call ceiling enforced INSIDE the service (defence in depth on
-// top of the route-level aiLimiter): 10 calls / 60s / user.
 const AI_RATE_MAX = 10;
 const AI_RATE_WINDOW_SEC = 60;
 
@@ -51,7 +28,6 @@ const POSITION_NAME = { 1: 'GK', 2: 'DEF', 3: 'MID', 4: 'FWD' };
 
 /* ============================================================
    buildSystemPrompt(language)
-   The master IQPREC system prompt. Arabic-first.
    ============================================================ */
 export function buildSystemPrompt(language = 'ar') {
   const lang = language === 'en' ? 'en' : 'ar';
@@ -113,10 +89,6 @@ give a confidence percentage and the single clearest reason for each.`;
 
 /* ============================================================
    callClaude(messages, systemPrompt, options)
-   options: { stream, maxTokens, userId, type, gameweek, language }
-   - Enforces the per-user Redis rate limit (fail-open if Redis down).
-   - stream:false → returns the text and logs to ai_recommendations.
-   - stream:true  → returns the Anthropic stream (caller pipes + logs).
    ============================================================ */
 export async function callClaude(messages, systemPrompt, options = {}) {
   const {
@@ -126,6 +98,7 @@ export async function callClaude(messages, systemPrompt, options = {}) {
     type = 'chat',
     gameweek = null,
     language = 'ar',
+    meta = null,
   } = options;
 
   if (!anthropic) {
@@ -135,8 +108,6 @@ export async function callClaude(messages, systemPrompt, options = {}) {
     });
   }
 
-  // Per-user rate guard (10 / 60s). Fail OPEN — never take AI down on a
-  // Redis hiccup; the route-level aiLimiter is the primary control.
   if (userId) {
     const gate = await checkAiRateLimit(userId);
     if (gate.blocked) {
@@ -149,7 +120,6 @@ export async function callClaude(messages, systemPrompt, options = {}) {
   }
 
   if (stream) {
-    // The caller is responsible for piping tokens + logging on completion.
     return anthropic.messages.stream({
       model: MODEL,
       max_tokens: maxTokens,
@@ -172,7 +142,6 @@ export async function callClaude(messages, systemPrompt, options = {}) {
     response?.content?.[0]?.text ??
     '';
 
-  // Best-effort audit log (never block the response on a logging failure).
   await logRecommendation({
     userId,
     type,
@@ -183,6 +152,7 @@ export async function callClaude(messages, systemPrompt, options = {}) {
     completionTokens: response?.usage?.output_tokens ?? 0,
     latencyMs,
     cached: false,
+    meta,
   });
 
   return text;
@@ -190,7 +160,6 @@ export async function callClaude(messages, systemPrompt, options = {}) {
 
 /* ------------------------------------------------------------
    Per-user AI rate limit — fixed 60s window via Redis INCR.
-   Returns { blocked, retryAfter }. Fail-open when Redis is down.
    ------------------------------------------------------------ */
 async function checkAiRateLimit(userId) {
   if (!isRedisReady()) return { blocked: false, retryAfter: 0 };
@@ -222,20 +191,19 @@ export async function logRecommendation({
   completionTokens = 0,
   latencyMs = 0,
   cached = false,
+  meta = null,
 }) {
   if (!hasDb() || !userId) return;
   try {
-    await supabase.from('ai_recommendations').insert({
-      user_id: userId,
-      type,
-      gameweek,
-      language,
-      output_text: outputText,
-      prompt_tokens: promptTokens,
-      completion_tokens: completionTokens,
-      latency_ms: latencyMs,
-      cached,
-    });
+    await execute(
+      `INSERT INTO ai_recommendations
+         (user_id, type, gameweek, language, output_text,
+          prompt_tokens, completion_tokens, latency_ms, cached, meta)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [userId, type, gameweek, language, outputText,
+       promptTokens, completionTokens, latencyMs, cached,
+       meta ? JSON.stringify(meta) : null]
+    );
   } catch (err) {
     console.warn('[ai] logRecommendation failed:', err?.message);
   }
@@ -243,27 +211,21 @@ export async function logRecommendation({
 
 /* ============================================================
    getCachedOrGenerate(cacheKey, ttlSeconds, generateFn)
-   DB-backed (ai_cache) response cache. Identical prompts return the
-   stored text for free; misses call generateFn() and persist it.
-   Returns { text, cached }.
+   DB-backed (ai_cache) response cache. Returns { text, cached }.
    ============================================================ */
 export async function getCachedOrGenerate(cacheKey, ttlSeconds, generateFn) {
   if (hasDb()) {
     try {
-      const { data } = await supabase
-        .from('ai_cache')
-        .select('id, response_text, hit_count, expires_at')
-        .eq('cache_key', cacheKey)
-        .maybeSingle();
-
-      if (data && new Date(data.expires_at).getTime() > Date.now()) {
-        // Best-effort hit counter bump.
-        supabase
-          .from('ai_cache')
-          .update({ hit_count: (data.hit_count ?? 0) + 1 })
-          .eq('id', data.id)
-          .then(() => {}, () => {});
-        return { text: data.response_text, cached: true };
+      const row = await queryOne(
+        `SELECT id, response_text, hit_count, expires_at FROM ai_cache WHERE cache_key = $1`,
+        [cacheKey]
+      );
+      if (row && new Date(row.expires_at).getTime() > Date.now()) {
+        execute(
+          `UPDATE ai_cache SET hit_count = hit_count + 1 WHERE id = $1`,
+          [row.id]
+        ).catch(() => {});
+        return { text: row.response_text, cached: true };
       }
     } catch (err) {
       console.warn('[ai] cache read failed:', err?.message);
@@ -275,12 +237,16 @@ export async function getCachedOrGenerate(cacheKey, ttlSeconds, generateFn) {
   if (hasDb()) {
     try {
       const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
-      await supabase
-        .from('ai_cache')
-        .upsert(
-          { cache_key: cacheKey, response_text: text, expires_at: expiresAt, hit_count: 0 },
-          { onConflict: 'cache_key' }
-        );
+      await execute(
+        `INSERT INTO ai_cache (cache_key, response_text, expires_at, hit_count)
+         VALUES ($1, $2, $3, 0)
+         ON CONFLICT (cache_key) DO UPDATE SET
+           response_text = EXCLUDED.response_text,
+           expires_at    = EXCLUDED.expires_at,
+           hit_count     = 0,
+           updated_at    = NOW()`,
+        [cacheKey, text, expiresAt]
+      );
     } catch (err) {
       console.warn('[ai] cache write failed:', err?.message);
     }
@@ -291,11 +257,6 @@ export async function getCachedOrGenerate(cacheKey, ttlSeconds, generateFn) {
 
 /* ============================================================
    buildPlayerContext(players, fixtureMap)
-   Formats live FPL player rows (from fpl_players) into a compact
-   string for prompt injection. NEVER hardcodes a player name — every
-   value comes straight from the database row.
-
-   fixtureMap: Map<teamId, [{ opp, fdr, home }]> (next fixtures).
    ============================================================ */
 export function buildPlayerContext(players, fixtureMap = new Map()) {
   if (!Array.isArray(players) || !players.length) return 'No players provided.';
@@ -322,15 +283,14 @@ export function buildPlayerContext(players, fixtureMap = new Map()) {
 }
 
 /* ------------------------------------------------------------
-   buildFixtureMap(gameweek) — Map<teamId, [{opp, fdr, home}]> for the
-   next few gameweeks, built from live fixtures + bootstrap team names.
+   buildFixtureMap(gameweek) — Map<teamId, [{opp, fdr, home}]>
    ------------------------------------------------------------ */
 export async function buildFixtureMap(gameweek) {
   const map = new Map();
   try {
     const [bootstrap, fixtures] = await Promise.all([
       getBootstrap(),
-      getFixtures(), // all fixtures; we filter to upcoming below
+      getFixtures(),
     ]);
 
     const shortById = new Map(
@@ -343,24 +303,14 @@ export async function buildFixtureMap(gameweek) {
       .sort((a, b) => (a.event ?? 999) - (b.event ?? 999));
 
     for (const f of upcoming) {
-      // Home team's view.
       if (f.team_h != null) {
         const arr = map.get(f.team_h) || [];
-        arr.push({
-          opp: shortById.get(f.team_a) || '?',
-          fdr: f.team_h_difficulty ?? 3,
-          home: true,
-        });
+        arr.push({ opp: shortById.get(f.team_a) || '?', fdr: f.team_h_difficulty ?? 3, home: true });
         map.set(f.team_h, arr);
       }
-      // Away team's view.
       if (f.team_a != null) {
         const arr = map.get(f.team_a) || [];
-        arr.push({
-          opp: shortById.get(f.team_h) || '?',
-          fdr: f.team_a_difficulty ?? 3,
-          home: false,
-        });
+        arr.push({ opp: shortById.get(f.team_h) || '?', fdr: f.team_a_difficulty ?? 3, home: false });
         map.set(f.team_a, arr);
       }
     }
@@ -372,11 +322,6 @@ export async function buildFixtureMap(gameweek) {
 
 /* ============================================================
    getCommunityOwnership(playerIds, gameweek)
-   The unique IQPREC signal: of all IQPREC managers with a saved squad
-   this gameweek, what % own each player. Computed from user_squads —
-   this data exists ONLY inside IQPREC and cannot be replicated by a
-   generic chatbot.
-   Returns { ownership: { [playerId]: pct }, totalSquads }.
    ============================================================ */
 export async function getCommunityOwnership(playerIds, gameweek) {
   const ids = (Array.isArray(playerIds) ? playerIds : [])
@@ -389,19 +334,16 @@ export async function getCommunityOwnership(playerIds, gameweek) {
   if (!hasDb() || !ids.length) return { ownership, totalSquads: 0 };
 
   try {
-    const { data, error } = await supabase
-      .from('user_squads')
-      .select('picks')
-      .eq('gameweek', Number(gameweek));
+    const rows = await queryMany(
+      `SELECT picks FROM user_squads WHERE gameweek = $1`,
+      [Number(gameweek)]
+    );
 
-    if (error || !data) return { ownership, totalSquads: 0 };
-
-    const total = data.length;
+    const total = rows.length;
     if (!total) return { ownership, totalSquads: 0 };
 
     const counts = new Map(ids.map((id) => [id, 0]));
-
-    for (const row of data) {
+    for (const row of rows) {
       const owned = extractPlayerIds(row.picks);
       for (const id of ids) {
         if (owned.has(id)) counts.set(id, counts.get(id) + 1);
@@ -409,7 +351,7 @@ export async function getCommunityOwnership(playerIds, gameweek) {
     }
 
     for (const id of ids) {
-      ownership[id] = Math.round((counts.get(id) / total) * 1000) / 10; // 1dp
+      ownership[id] = Math.round((counts.get(id) / total) * 1000) / 10;
     }
     return { ownership, totalSquads: total };
   } catch (err) {
@@ -418,7 +360,6 @@ export async function getCommunityOwnership(playerIds, gameweek) {
   }
 }
 
-/* picks JSONB may be an array of ids or of objects — handle both. */
 function extractPlayerIds(picks) {
   const set = new Set();
   if (!Array.isArray(picks)) return set;
@@ -433,10 +374,6 @@ function extractPlayerIds(picks) {
   return set;
 }
 
-/* ------------------------------------------------------------
-   buildCommunityContext(players, ownership) — a human-readable block
-   for the prompt, only for players the community actually owns.
-   ------------------------------------------------------------ */
 export function buildCommunityContext(players, ownership) {
   const lines = [];
   for (const p of players) {
@@ -451,21 +388,20 @@ export function buildCommunityContext(players, ownership) {
   return 'IQPREC Arab Community Data for this gameweek:\n' + lines.join('\n');
 }
 
-/* ------------------------------------------------------------
-   getActivePlayersByIds(ids) — current-season, non-removed rows with
-   the full column set the prompt needs. (Validation is separate.)
-   ------------------------------------------------------------ */
 export async function getActivePlayersByIds(ids) {
   if (!hasDb() || !ids?.length) return [];
-  const { data } = await supabase
-    .from('fpl_players')
-    .select(
-      'id, web_name, team_id, team_name, element_type, now_cost, form, total_points, minutes, expected_goals, expected_assists, selected_by_percent, status, news, chance_of_playing'
-    )
-    .in('id', ids)
-    .eq('season', CURRENT_SEASON)
-    .neq('status', 'removed');
-  return data || [];
+  try {
+    return await queryMany(
+      `SELECT id, web_name, team_id, team_name, element_type, now_cost, form,
+              total_points, minutes, expected_goals, expected_assists,
+              selected_by_percent, status, news, chance_of_playing, photo
+       FROM fpl_players
+       WHERE id = ANY($1::int[]) AND season = $2 AND status != $3`,
+      [ids, CURRENT_SEASON, 'removed']
+    );
+  } catch {
+    return [];
+  }
 }
 
 export default {

@@ -1,37 +1,44 @@
 /* ============================================================
    IQPREC — services/email.service.js
-   Transactional email via Resend, with full IQPREC branding:
+   Transactional email via Gmail SMTP (nodemailer), with full IQPREC branding:
    navy header (IQ green / PREC white), green accent line, professional
    layout, footer "All Rights Reserved © IQPREC".
 
    Bilingual: subject + body switch on `language` ('ar' → RTL Arabic).
 
-   FAIL-SAFE: if RESEND_API_KEY is not set, every send() logs to the
-   console instead of throwing — the server never crashes in dev, and
-   callers (which fire-and-forget) never reject.
+   FAIL-SAFE: if GMAIL_USER / GMAIL_APP_PASSWORD is not set, every send()
+   logs to the console instead of throwing — the server never crashes in dev,
+   and callers (which fire-and-forget) never reject.
 
    NOTE on inline styles: CLAUDE.md's "no inline styles" rule governs the
    web frontend. HTML email is the one context where inline styles are
    mandatory — mail clients strip <style> blocks — so they are used here.
    ============================================================ */
 
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { env, isDevelopment } from '../config/env.js';
 
-const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
-const FROM = env.RESEND_FROM || 'IQPREC <noreply@iqprec.com>';
 const FRONTEND_URL = env.FRONTEND_URL || 'https://iqprec.com';
+const GMAIL_USER = env.GMAIL_USER || '';
+const FROM = `IQPREC <${GMAIL_USER}>`;
 
-/* In development (or with a placeholder key like "will_add..."), never call
-   the real Resend API — log the message + action URL to the console instead,
-   so a missing/invalid key can't break registration and tokens can be
-   verified manually. Production with a real key always sends for real. */
+let transporter = null;
+if (GMAIL_USER && env.GMAIL_APP_PASSWORD &&
+    !GMAIL_USER.startsWith('will_add') &&
+    !env.GMAIL_APP_PASSWORD.startsWith('will_add')) {
+  transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: GMAIL_USER,
+      pass: env.GMAIL_APP_PASSWORD,
+    },
+  });
+}
+
 function isDevEmail() {
-  return (
-    isDevelopment ||
-    (env.RESEND_API_KEY || '').startsWith('will_add') ||
-    !resend
-  );
+  return isDevelopment || !transporter;
 }
 
 /* Brand tokens (mirrors :root in the design system). */
@@ -57,11 +64,9 @@ async function send({ to, subject, html, devUrl, devUrlLabel = 'Verification URL
     return { success: true, dev: true };
   }
   try {
-    const result = await resend.emails.send({ from: FROM, to, subject, html });
-    if (result?.error) {
-      console.error('[email] Resend error:', result.error);
-    }
-    return result;
+    const info = await transporter.sendMail({ from: FROM, to, subject, html });
+    console.log(`[email] sent to ${to} — messageId: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error('[email] send failed:', err?.message || err);
     return { error: err?.message || 'send_failed' };
@@ -168,7 +173,7 @@ export async function sendVerificationEmail(email, fullName, verificationToken, 
    ------------------------------------------------------------ */
 export async function sendSecurityAlertEmail(email, fullName, ipAddress, language = 'ar') {
   const name = fullName || (language === 'ar' ? 'صديقنا' : 'there');
-  const resetLink = `${FRONTEND_URL}/forgot-password.html`;
+  const resetLink = `${FRONTEND_URL}/forgot-password`;
   const ip = ipAddress || (language === 'ar' ? 'غير معروف' : 'unknown');
 
   const subject = 'Security Alert — IQPREC';
@@ -199,7 +204,7 @@ export async function sendSecurityAlertEmail(email, fullName, ipAddress, languag
    3) Password reset email
    ------------------------------------------------------------ */
 export async function sendPasswordResetEmail(email, fullName, resetToken, language = 'ar') {
-  const link = `${FRONTEND_URL}/reset-password.html?token=${encodeURIComponent(resetToken)}`;
+  const link = `${FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
   const name = fullName || (language === 'ar' ? 'صديقنا' : 'there');
 
   const subject =

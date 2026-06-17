@@ -36,6 +36,22 @@ function toParas(text) {
 
 const POS_CLASS = { 1: 'pos-gk', 2: 'pos-def', 3: 'pos-mid', 4: 'pos-fwd' };
 
+function photoUrl(photo) {
+  if (!photo) return null;
+  const id = String(photo).replace('.jpg', '').replace('.png', '');
+  return `https://resources.premierleague.com/premierleague/photos/players/110x140/p${id}.png`;
+}
+
+function wireImgFallbacks(root) {
+  root.querySelectorAll('img.player-img').forEach((img) => {
+    img.addEventListener('error', () => {
+      img.hidden = true;
+      const fb = img.nextElementSibling;
+      if (fb && fb.classList.contains('player-img-fallback')) fb.hidden = false;
+    });
+  });
+}
+
 /* unavailable → red; cold form (<3) → amber. */
 function weakness(p) {
   if (!p) return '';
@@ -91,12 +107,23 @@ function playerChip(pick) {
   const p = pick.player || {};
   const cls = weakness(p);
   const pos = POS_CLASS[p.element_type] || 'pos-mid';
+  const cap = pick.is_captain ? ' is-captain' : '';
   const name = p.web_name || '—';
   const price = p.now_cost != null ? `£${(Number(p.now_cost) / 10).toFixed(1)}m` : '';
   const form = p.form != null ? `${t('dash.form')} ${p.form}` : '';
+  const url = photoUrl(p.photo);
+  const initials = esc(String(name).slice(0, 3).toUpperCase());
+
+  const photoInner = url
+    ? `<img src="${esc(url)}" alt="${esc(name)}" loading="lazy" class="player-img">
+       <span class="player-initials player-img-fallback" hidden>${initials}</span>`
+    : `<span class="player-initials">${initials}</span>`;
+
   return `
     <div class="squad-chip ${cls}">
-      <span class="player-circle ${pos}${pick.is_captain ? ' is-captain' : ''}">${esc(name.slice(0, 3).toUpperCase())}</span>
+      <div class="player-photo-ring ${pos}${cap}">
+        <div class="player-photo-inner">${photoInner}</div>
+      </div>
       <span class="chip-name">${esc(name)}</span>
       <span class="chip-meta">${esc(price)}${form ? ' · ' + esc(form) : ''}</span>
     </div>`;
@@ -117,6 +144,7 @@ function renderSquadGrid() {
       <span class="legend-item"><span class="dot dot-red"></span>${esc(t('transfersPage.legendOut'))}</span>
       <span class="legend-item"><span class="dot dot-amber"></span>${esc(t('transfersPage.legendForm'))}</span>
     </div>`;
+  wireImgFallbacks(host);
   applyTranslations(host);
 }
 

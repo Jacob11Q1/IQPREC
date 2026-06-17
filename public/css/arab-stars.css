@@ -1,9 +1,52 @@
 /* ============================================================
    IQPREC — arab-stars.css
-   Page-specific styles for arab-stars.html. Tokens come from
-   design-system.css; keep this file scoped to this page only.
+   Page-specific styles. Shared data-table / table-scroll /
+   badge-count / mono / fw-bold live in components.css.
    ============================================================ */
 
-[data-page="arab-stars"] .content-body {
-  /* page-specific layout goes here */
+/* Small photo ring for table rows — overrides the responsive sizes in dashboard.css */
+.player-photo-ring--sm {
+  width: 32px !important;
+  height: 32px !important;
+  flex-shrink: 0;
 }
+
+/* ---------------- Player name cell ---------------- */
+.player-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.player-cell-name {
+  font-weight: 600;
+  color: var(--white);
+}
+
+.player-circle--sm {
+  width: 28px;
+  height: 28px;
+  font-size: 0.6rem;
+  flex-shrink: 0;
+}
+
+/* ---------------- Position tags ---------------- */
+.pos-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  border-radius: var(--r-sm);
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+
+.pos-tag--pos-gk  { background: rgba(245, 166, 35, 0.15);  color: var(--gold); }
+.pos-tag--pos-def { background: rgba(0, 217, 126, 0.12);   color: var(--green); }
+.pos-tag--pos-mid { background: rgba(59, 139, 235, 0.12);  color: var(--blue); }
+.pos-tag--pos-fwd { background: rgba(232, 68, 90, 0.12);   color: var(--red); }
+
+/* ---------------- Form colours ---------------- */
+.form-hot  { color: var(--green); font-weight: 700; }
+.form-cold { color: var(--red); }

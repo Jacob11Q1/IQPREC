@@ -18,6 +18,7 @@ import { Router } from 'express';
 import { env } from '../config/env.js';
 import statsRouter from './stats.js';
 import authRouter from './auth.js';
+import oauthRouter from './oauth.js';
 import appRouter from './app.js';
 import aiRouter from './ai.js';
 import fplRouter from './fpl.js';
@@ -58,6 +59,9 @@ api.use('/billing', billingRouter);
 
 // ---- Auth (L3: brute-force protection) ----
 api.use('/auth', authLimiter, authRouter);
+
+// ---- OAuth social login (no rate limit — redirects are browser-driven) ----
+api.use('/oauth', oauthRouter);
 
 // ---- App (authenticated + subscription-gated) ----
 api.use('/app', verifyToken, checkSubscription, appRouter);

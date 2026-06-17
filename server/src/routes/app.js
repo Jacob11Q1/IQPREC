@@ -1,20 +1,21 @@
 /* ============================================================
    IQPREC — routes/app.js
    Authenticated, subscription-gated surface. Mounted at
-   /api/v1/app behind verifyToken + checkSubscription (see index.js),
-   so any request here without a valid token returns 401.
+   /api/v1/app behind verifyToken + checkSubscription.
    ============================================================ */
 
 import { Router } from 'express';
+import { z } from 'zod';
 
-import { supabase, hasDb } from '../db/client.js';
+import { hasDb } from '../db/client.js';
+import { queryOne, execute } from '../db/query.js';
+import { validateBody } from '../middleware/security/validate-body.js';
 
 const router = Router();
 
 const ok = (res, data) =>
   res.json({ success: true, data, error: null, message: null });
 
-// GET /api/v1/app/me — confirms the auth + subscription gates pass.
 router.get('/me', (req, res) => {
   res.json({
     success: true,
@@ -27,42 +28,55 @@ router.get('/me', (req, res) => {
   });
 });
 
-/* ------------------------------------------------------------
-   GET /api/v1/app/captain/latest
-   The most recent captain recommendation generated for this user.
-   Returns { hasRecommendation:false } until the AI captain feature
-   (a later day) has written a row — the dashboard then shows the
-   "Generate this week's captain pick" CTA instead of a card.
-   ------------------------------------------------------------ */
+const profileSchema = z.object({
+  fplTeamId: z.number().int().positive().max(999_999_999).nullable().optional(),
+  language: z.enum(['ar', 'en']).optional(),
+  fullName: z.string().trim().max(120).optional(),
+});
+
+router.put('/profile', validateBody(profileSchema), async (req, res, next) => {
+  try {
+    if (!hasDb()) return res.status(503).json({ success: false, data: null, error: 'DB_UNAVAILABLE', message: 'Unavailable.' });
+
+    const { fplTeamId, language, fullName } = req.body;
+    const sets = [];
+    const params = [];
+
+    if (fplTeamId !== undefined) { params.push(fplTeamId); sets.push(`fpl_team_id = $${params.length}`); }
+    if (language !== undefined)  { params.push(language);  sets.push(`language = $${params.length}`); }
+    if (fullName !== undefined)  { params.push(fullName);  sets.push(`full_name = $${params.length}`); }
+
+    if (sets.length === 0) {
+      return res.status(400).json({ success: false, data: null, error: 'APP_4001', message: 'Nothing to update.' });
+    }
+
+    params.push(req.user.userId);
+    await execute(
+      `UPDATE users SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${params.length}`,
+      params
+    );
+
+    return res.json({ success: true, data: null, error: null, message: 'Profile updated.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/captain/latest', async (req, res, next) => {
   try {
     if (!hasDb()) return ok(res, { hasRecommendation: false });
 
-    const { data, error } = await supabase
-      .from('ai_recommendations')
-      .select('id, type, gameweek, language, output_text, meta, created_at')
-      .eq('user_id', req.user.userId)
-      .eq('type', 'captain')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const rec = await queryOne(
+      `SELECT id, type, gameweek, language, output_text, meta, created_at
+       FROM ai_recommendations
+       WHERE user_id = $1 AND type = 'captain'
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [req.user.userId]
+    );
 
-    // `meta` may not exist as a column yet — fall back gracefully.
-    if (error && /column .*meta/i.test(error.message || '')) {
-      const retry = await supabase
-        .from('ai_recommendations')
-        .select('id, type, gameweek, language, output_text, created_at')
-        .eq('user_id', req.user.userId)
-        .eq('type', 'captain')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!retry.data) return ok(res, { hasRecommendation: false });
-      return ok(res, { hasRecommendation: true, recommendation: retry.data });
-    }
-
-    if (!data) return ok(res, { hasRecommendation: false });
-    return ok(res, { hasRecommendation: true, recommendation: data });
+    if (!rec) return ok(res, { hasRecommendation: false });
+    return ok(res, { hasRecommendation: true, recommendation: rec });
   } catch (err) {
     next(err);
   }
